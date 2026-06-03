@@ -1,5 +1,6 @@
 package ju.pioneer.cloud_disk;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -14,6 +15,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 // 启动定时任务
 @EnableScheduling
+// 扫描Mapper接口
+@MapperScan("ju.pioneer.cloud_disk.mapper")
 public class CloudDiskApplication {
 
     public static void main(String[] args) {

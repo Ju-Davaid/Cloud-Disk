@@ -112,6 +112,7 @@
 
     <build>
         <plugins>
+            <!-- 热加载插件 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -123,6 +124,27 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+            <!-- MyBatis Generator 生成插件 1.4.2适配3.0.3 -->
+            <plugin>
+                <groupId>org.mybatis.generator</groupId>
+                <artifactId>mybatis-generator-maven-plugin</artifactId>
+                <version>1.4.0</version>
+                <configuration>
+                    <!-- 配置文件路径 -->
+                    <configurationFile>src/main/resources/generatorConfig.xml</configurationFile>
+                    <verbose>true</verbose>
+                    <!-- 覆盖旧文件 -->
+                    <overwrite>true</overwrite>
+                </configuration>
+                <dependencies>
+                    <!-- 插件内部驱动 -->
+                    <dependency>
+                        <groupId>com.mysql</groupId>
+                        <artifactId>mysql-connector-j</artifactId>
+                        <version>8.3.0</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>
