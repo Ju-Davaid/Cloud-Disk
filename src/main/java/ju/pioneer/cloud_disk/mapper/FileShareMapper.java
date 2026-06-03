@@ -1,6 +1,6 @@
 package ju.pioneer.cloud_disk.mapper;
 
-import ju.pioneer.cloud_disk.entity.FileShare;
+import ju.pioneer.cloud_disk.entity.po.FileShare;
 
 public interface FileShareMapper {
     int deleteByPrimaryKey(String shareId);

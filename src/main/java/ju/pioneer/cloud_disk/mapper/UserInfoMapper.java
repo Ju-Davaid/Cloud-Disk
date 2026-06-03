@@ -1,6 +1,6 @@
 package ju.pioneer.cloud_disk.mapper;
 
-import ju.pioneer.cloud_disk.entity.UserInfo;
+import ju.pioneer.cloud_disk.entity.po.UserInfo;
 
 public interface UserInfoMapper {
     int deleteByPrimaryKey(String userId);

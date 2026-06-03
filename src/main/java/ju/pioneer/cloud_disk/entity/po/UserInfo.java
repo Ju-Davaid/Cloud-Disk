@@ -1,6 +1,7 @@
-package ju.pioneer.cloud_disk.entity;
+package ju.pioneer.cloud_disk.entity.po;
 
 import lombok.Data;
+
 import java.util.Date;
 
 @Data

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 // 项目启动入口
 // 启动异步
 @EnableAsync
+// 扫描基础包
 @SpringBootApplication(scanBasePackages = "ju.pioneer.cloud_disk")
 // 启动事务管理
 @EnableTransactionManagement

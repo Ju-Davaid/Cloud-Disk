@@ -1,4 +1,4 @@
-package ju.pioneer.cloud_disk.entity;
+package ju.pioneer.cloud_disk.entity.po;
 
 import lombok.Getter;
 

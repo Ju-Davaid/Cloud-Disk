@@ -1,7 +1,7 @@
 package ju.pioneer.cloud_disk.mapper;
 
-import ju.pioneer.cloud_disk.entity.FileInfo;
-import ju.pioneer.cloud_disk.entity.FileInfoKey;
+import ju.pioneer.cloud_disk.entity.po.FileInfo;
+import ju.pioneer.cloud_disk.entity.po.FileInfoKey;
 
 public interface FileInfoMapper {
     int deleteByPrimaryKey(FileInfoKey key);

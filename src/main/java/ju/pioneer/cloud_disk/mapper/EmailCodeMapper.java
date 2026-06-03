@@ -1,7 +1,7 @@
 package ju.pioneer.cloud_disk.mapper;
 
-import ju.pioneer.cloud_disk.entity.EmailCode;
-import ju.pioneer.cloud_disk.entity.EmailCodeKey;
+import ju.pioneer.cloud_disk.entity.po.EmailCode;
+import ju.pioneer.cloud_disk.entity.po.EmailCodeKey;
 
 public interface EmailCodeMapper {
     int deleteByPrimaryKey(EmailCodeKey key);

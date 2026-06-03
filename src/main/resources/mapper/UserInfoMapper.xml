@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="ju.pioneer.cloud_disk.mapper.UserInfoMapper">
-  <resultMap id="BaseResultMap" type="ju.pioneer.cloud_disk.entity.UserInfo">
+  <resultMap id="BaseResultMap" type="ju.pioneer.cloud_disk.entity.po.UserInfo">
     <id column="user_id" jdbcType="VARCHAR" property="userId" />
     <result column="nick_name" jdbcType="VARCHAR" property="nickName" />
     <result column="email" jdbcType="VARCHAR" property="email" />
@@ -28,7 +28,7 @@
     delete from user_info
     where user_id = #{userId,jdbcType=VARCHAR}
   </delete>
-  <insert id="insert" parameterType="ju.pioneer.cloud_disk.entity.UserInfo">
+  <insert id="insert" parameterType="ju.pioneer.cloud_disk.entity.po.UserInfo">
     insert into user_info (user_id, nick_name, email, 
       qq_open_id, qq_avatar, password, 
       join_time, last_login_time, status, 
@@ -38,7 +38,7 @@
       #{joinTime,jdbcType=TIMESTAMP}, #{lastLoginTime,jdbcType=TIMESTAMP}, #{status,jdbcType=TINYINT}, 
       #{useSpace,jdbcType=BIGINT}, #{totalSpace,jdbcType=BIGINT})
   </insert>
-  <insert id="insertSelective" parameterType="ju.pioneer.cloud_disk.entity.UserInfo">
+  <insert id="insertSelective" parameterType="ju.pioneer.cloud_disk.entity.po.UserInfo">
     insert into user_info
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="userId != null">
@@ -111,7 +111,7 @@
       </if>
     </trim>
   </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="ju.pioneer.cloud_disk.entity.UserInfo">
+  <update id="updateByPrimaryKeySelective" parameterType="ju.pioneer.cloud_disk.entity.po.UserInfo">
     update user_info
     <set>
       <if test="nickName != null">
@@ -147,7 +147,7 @@
     </set>
     where user_id = #{userId,jdbcType=VARCHAR}
   </update>
-  <update id="updateByPrimaryKey" parameterType="ju.pioneer.cloud_disk.entity.UserInfo">
+  <update id="updateByPrimaryKey" parameterType="ju.pioneer.cloud_disk.entity.po.UserInfo">
     update user_info
     set nick_name = #{nickName,jdbcType=VARCHAR},
       email = #{email,jdbcType=VARCHAR},
