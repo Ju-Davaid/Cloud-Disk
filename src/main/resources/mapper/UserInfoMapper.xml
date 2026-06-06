@@ -147,6 +147,7 @@
     </set>
     where user_id = #{userId,jdbcType=VARCHAR}
   </update>
+  <!-- 根据用户ID更新用户信息 -->
   <update id="updateByPrimaryKey" parameterType="ju.pioneer.cloud_disk.entity.po.UserInfo">
     update user_info
     set nick_name = #{nickName,jdbcType=VARCHAR},
@@ -161,4 +162,8 @@
       total_space = #{totalSpace,jdbcType=BIGINT}
     where user_id = #{userId,jdbcType=VARCHAR}
   </update>
+  <!-- 根据邮箱查询用户信息 -->
+  <select id="selectByEmail" parameterType="java.lang.String" resultType="ju.pioneer.cloud_disk.entity.po.UserInfo">
+    select * from user_info where email = #{email,jdbcType=VARCHAR}
+  </select>
 </mapper>

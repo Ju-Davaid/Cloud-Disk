@@ -12,6 +12,6 @@ import java.util.Date;
 public class EmailCode extends EmailCodeKey {
     private Date createTime;
 
-    private Boolean status;
+    private int status;
 
 }

@@ -135,7 +135,7 @@
                     <configurationFile>src/main/resources/generatorConfig.xml</configurationFile>
                     <verbose>true</verbose>
                     <!-- 覆盖旧文件 -->
-                    <overwrite>true</overwrite>
+<!--                    <overwrite>true</overwrite>-->
                 </configuration>
                 <dependencies>
                     <!-- 插件内部驱动 -->

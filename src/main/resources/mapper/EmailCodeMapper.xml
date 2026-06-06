@@ -79,4 +79,16 @@
     where email = #{email,jdbcType=VARCHAR}
       and code = #{code,jdbcType=VARCHAR}
   </update>
+  <!-- 禁用邮箱验证码 -->
+  <update id="disableEmailCode" parameterType="java.lang.String">
+    update email_code
+    set status = 1
+    where email = #{email,jdbcType=VARCHAR} and status = 0
+  </update>
+  <!-- 启用邮箱验证码 -->
+  <update id="enableEmailCode" parameterType="java.lang.String">
+    update email_code
+    set status = 0
+    where email = #{email,jdbcType=VARCHAR} and status = 1
+  </update>
 </mapper>
