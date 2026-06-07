@@ -84,7 +84,7 @@ public class EmailCodeServiceImpl implements EmailCodeService {
            mimeMessageHelper.setFrom(appConfig.getSenderUsername());
            mimeMessageHelper.setTo(email);
            mimeMessageHelper.setSubject(appConfig.getAppName()+"邮箱验证码");
-           mimeMessageHelper.setText("您的验证码为："+code);
+           mimeMessageHelper.setText("您的验证码为："+code+"，有效时长为15分钟");
            mimeMessage.setSentDate(new Date());
            javaMailSender.send(mimeMessage);
            logger.info("发送邮箱验证码成功");

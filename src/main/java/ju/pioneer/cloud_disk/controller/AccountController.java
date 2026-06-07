@@ -5,7 +5,10 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import ju.pioneer.cloud_disk.annotation.GlobalInterceptor;
+import ju.pioneer.cloud_disk.annotation.VerifyParameter;
 import ju.pioneer.cloud_disk.constants.Constants;
+import ju.pioneer.cloud_disk.entity.enums.VerifyRegexEnum;
 import ju.pioneer.cloud_disk.entity.vo.ResponseVO;
 import ju.pioneer.cloud_disk.exception.BusinessException;
 import ju.pioneer.cloud_disk.service.EmailCodeService;
@@ -23,8 +26,9 @@ public class AccountController extends BaseController{
     @Resource
     private EmailCodeService emailCodeService;
     // 验证码图片生成
+    @GlobalInterceptor(checkParameters = true)
     @GetMapping("/generateCheckCodeImage")
-    public void generateCheckCodeImage(HttpServletResponse response, HttpSession session,@RequestParam(defaultValue = "0") int type) throws IOException {
+    public void generateCheckCodeImage(HttpServletResponse response, HttpSession session, @RequestParam(defaultValue = Constants.ZERO+"") Integer type) {
         Object[] captcha = CaptchaUtils.createCaptcha();
         String code = (String) captcha[0];
         BufferedImage image = (BufferedImage) captcha[1];
@@ -45,13 +49,16 @@ public class AccountController extends BaseController{
         }
     }
     // 发送邮箱验证码
+    @GlobalInterceptor(checkParameters = true)
     @GetMapping("/sendEmailCode")
-    public ResponseVO<Object> sendEmailCode(HttpSession session, @RequestParam String email, @RequestParam String checkCode , @RequestParam int type)  {
+    public ResponseVO<Object> sendEmailCode(
+            HttpSession session,
+            @VerifyParameter(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
+            @VerifyParameter(required = true) String checkCode ,
+            @VerifyParameter(required = true) Integer type
+    ) {
         try{
             String checkCodeSession = (String) session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL);
-            if(checkCodeSession==null){
-                throw new BusinessException("请先获取验证码");
-            }
             if(!checkCodeSession.equalsIgnoreCase(checkCode)){
                 throw new BusinessException("验证码错误");
             }
