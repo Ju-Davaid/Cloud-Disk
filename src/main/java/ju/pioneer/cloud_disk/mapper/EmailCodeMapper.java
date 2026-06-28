@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 public interface EmailCodeMapper {
     /**
      * 根据主键删除邮箱验证码
+     *
      * @param key 主键
      * @return 影响行数
      */
@@ -14,20 +15,23 @@ public interface EmailCodeMapper {
 
     /**
      * 添加邮箱验证码
-     * @param  record 邮箱验证码
-     * @return  影响行数
+     *
+     * @param record 邮箱验证码
+     * @return 影响行数
      */
     int insert(EmailCode record);
 
     /**
      * 添加邮箱验证码
-     * @param  record 邮箱验证码
+     *
+     * @param record 邮箱验证码
      * @return int 影响行数
      */
     int insertSelective(EmailCode record);
 
     /**
      * 根据主键查询邮箱验证码
+     *
      * @param key 主键
      * @return 邮箱验证码
      */
@@ -35,27 +39,40 @@ public interface EmailCodeMapper {
 
     /**
      * 更新邮箱验证码
-     * @param  record 邮箱验证码
-     * @return  影响行数
+     *
+     * @param record 邮箱验证码
+     * @return 影响行数
      */
     int updateByPrimaryKeySelective(EmailCode record);
 
     /**
      * 更新邮箱验证码
-     * @param  record 邮箱验证码
-     * @return  影响行数
+     *
+     * @param record 邮箱验证码
+     * @return 影响行数
      */
     int updateByPrimaryKey(EmailCode record);
 
     /**
      * 禁用邮箱验证码
+     *
      * @param email 邮箱
      */
     void disableEmailCode(@Param("email") String email);
 
     /**
      * 启用邮箱验证码
+     *
      * @param email 邮箱
      */
     void enableEmailCode(@Param("email") String email);
+
+    /**
+     * 根据邮箱和验证码查询邮箱验证码
+     *
+     * @param email 邮箱
+     * @param code  验证码
+     * @return 邮箱验证码
+     */
+    EmailCode selectByEmailCode(@Param("email") String email, @Param("code") String code);
 }

@@ -17,9 +17,10 @@ public class BaseController {
 
     /**
      * 成功响应VO
-     * @param t 数据
-     * @return 成功响应VO
+     *
+     * @param t   数据
      * @param <T> 数据类型
+     * @return 成功响应VO
      */
     protected <T> ResponseVO<T> getSuccessResponseVO(T t) {
         ResponseVO<T> responseVO = new ResponseVO<>();
@@ -32,17 +33,18 @@ public class BaseController {
 
     /**
      * 业务异常响应VO
-     * @param e 业务异常
-     * @param t 数据
-     * @return 业务异常响应VO
+     *
+     * @param e   业务异常
+     * @param t   数据
      * @param <T> 数据类型
+     * @return 业务异常响应VO
      */
-    protected <T> ResponseVO<T> getBusinessErrorResponseVO(BusinessException e, T t){
-        ResponseVO<T> vo=new ResponseVO<>();
+    protected <T> ResponseVO<T> getBusinessErrorResponseVO(BusinessException e, T t) {
+        ResponseVO<T> vo = new ResponseVO<>();
         vo.setStatus(STATUS_ERROR);
-        if(e.getCode()==null){
+        if (e.getCode() == null) {
             vo.setCode(ResponseCodeEnum.CODE_600.getCode());
-        }else{
+        } else {
             vo.setCode(e.getCode());
         }
         vo.setInfo(e.getMessage());
@@ -52,12 +54,13 @@ public class BaseController {
 
     /**
      * 服务器异常响应VO
-     * @param t 数据
-     * @return 服务器异常响应VO
+     *
+     * @param t   数据
      * @param <T> 数据类型
+     * @return 服务器异常响应VO
      */
-    protected <T> ResponseVO<T> getServerErrorResponseVO(T t){
-        ResponseVO<T> vo=new ResponseVO<>();
+    protected <T> ResponseVO<T> getServerErrorResponseVO(T t) {
+        ResponseVO<T> vo = new ResponseVO<>();
         vo.setStatus(STATUS_ERROR);
         vo.setCode(ResponseCodeEnum.CODE_500.getCode());
         vo.setInfo(ResponseCodeEnum.CODE_500.getMsg());

@@ -45,22 +45,23 @@ public class EmailCodeServiceImpl implements EmailCodeService {
 
     /**
      * 发送邮箱验证码
+     *
      * @param email 邮箱
-     * @param type 类型
+     * @param type  类型
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void sendEmailCode(String email, int type) {
         // 注册
-        if(type == Constants.ZERO){
+        if (type == Constants.ZERO) {
             UserInfo userInfo = userInfoMapper.selectByEmail(email);
-            if(userInfo!=null){
+            if (userInfo != null) {
                 throw new BusinessException("邮箱已注册");
             }
         }
         String code = StringTools.getRandomNumber(Constants.LENGTH_EMAIL_CODE);
         // 发送验证码
-        sendEmailCode(email,code);
+        sendEmailCode(email, code);
         // 将之前的验证码失效化
         emailCodeMapper.disableEmailCode(email);
         EmailCode emailCode = new EmailCode();
@@ -71,26 +72,49 @@ public class EmailCodeServiceImpl implements EmailCodeService {
         this.add(emailCode);
     }
 
+
     /**
      * 发送邮箱验证码
+     *
      * @param email 邮箱
-     * @param code 验证码
+     * @param code  验证码
      */
-    private void sendEmailCode(String email,String code) {
-       try {
-           MimeMessage mimeMessage=javaMailSender.createMimeMessage();
-           // 发送邮件
-           MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage,true,"UTF-8");
-           mimeMessageHelper.setFrom(appConfig.getSenderUsername());
-           mimeMessageHelper.setTo(email);
-           mimeMessageHelper.setSubject(appConfig.getAppName()+"邮箱验证码");
-           mimeMessageHelper.setText("您的验证码为："+code+"，有效时长为15分钟");
-           mimeMessage.setSentDate(new Date());
-           javaMailSender.send(mimeMessage);
-           logger.info("发送邮箱验证码成功");
-       }catch (MessagingException e){
-           logger.error("发送邮箱验证码失败",e);
-           throw new BusinessException("发送邮箱验证码失败");
-       }
+    private void sendEmailCode(String email, String code) {
+        try {
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            // 发送邮件
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+            mimeMessageHelper.setFrom(appConfig.getSenderUsername());
+            mimeMessageHelper.setTo(email);
+            mimeMessageHelper.setSubject(appConfig.getAppName() + "邮箱验证码");
+            mimeMessageHelper.setText("您的验证码为：" + code + "，有效时长为15分钟");
+            mimeMessage.setSentDate(new Date());
+            javaMailSender.send(mimeMessage);
+            logger.info("发送邮箱验证码成功");
+        } catch (MessagingException e) {
+            logger.error("发送邮箱验证码失败", e);
+            throw new BusinessException("发送邮箱验证码失败");
+        }
+    }
+
+    /**
+     * 校验邮箱验证码
+     *
+     * @param email 邮箱
+     * @param code  验证码
+     */
+    @Override
+    public void checkEmailCode(String email, String code) {
+        EmailCode emailCode = emailCodeMapper.selectByEmailCode(email, code);
+        // 验证码是否存在
+        if (emailCode == null) {
+            throw new BusinessException("邮箱验证码不存在");
+        }
+        // 校验验证码是否过期
+        if (emailCode.getStatus() == Constants.ONE || System.currentTimeMillis() - emailCode.getCreateTime().getTime() > Constants.EMAIL_CODE_EXPIRE_TIME) {
+            throw new BusinessException("邮箱验证码已过期");
+        }
+        // 校验通过，将验证码失效化
+        emailCodeMapper.disableEmailCode(email);
     }
 }

@@ -33,7 +33,7 @@ public class GlobalExceptionHandlerController extends BaseController {
             ajaxResponse.setCode(businessException.getCode() == null ? ResponseCodeEnum.CODE_600.getCode() : businessException.getCode());
             ajaxResponse.setInfo(businessException.getMessage());
             ajaxResponse.setStatus(STATUS_ERROR);
-        } else if (e instanceof BindException|| e instanceof MethodArgumentTypeMismatchException) {
+        } else if (e instanceof BindException || e instanceof MethodArgumentTypeMismatchException) {
             //参数类型错误
             ajaxResponse.setCode(ResponseCodeEnum.CODE_600.getCode());
             ajaxResponse.setInfo(ResponseCodeEnum.CODE_600.getMsg());

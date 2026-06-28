@@ -5,14 +5,10 @@ import java.util.Map;
 
 // 类型枚举
 public enum TypeEnum {
-    STRING,
-    INTEGER,
-    LONG,
-    DOUBLE,
-    BOOLEAN,
-    NULL;
+    STRING, INTEGER, LONG, DOUBLE, BOOLEAN, NULL;
     // 类型映射
     public static final Map<TypeEnum, String> TYPE_MAP = new HashMap<>();
+
     // 初始化类型映射
     static {
         TYPE_MAP.put(STRING, "java.lang.String");
@@ -22,6 +18,7 @@ public enum TypeEnum {
         TYPE_MAP.put(BOOLEAN, "java.lang.Boolean");
         TYPE_MAP.put(NULL, "null");
     }
+
     @Override
     public String toString() {
         return TYPE_MAP.get(this);

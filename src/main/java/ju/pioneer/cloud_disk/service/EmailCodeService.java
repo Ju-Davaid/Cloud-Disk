@@ -7,13 +7,24 @@ import ju.pioneer.cloud_disk.entity.po.EmailCode;
 public interface EmailCodeService {
     /**
      * 新增邮箱验证码
+     *
+     * @param bean 邮箱验证码
      */
     EmailCode add(EmailCode bean);
 
     /**
      * 发送邮箱验证码
+     *
      * @param email 邮箱
-     * @param type 类型
+     * @param type  类型
      */
-    void sendEmailCode(String email,int type);
+    void sendEmailCode(String email, int type);
+
+    /**
+     * 校验邮箱验证码
+     *
+     * @param email 邮箱
+     * @param code  验证码
+     */
+    void checkEmailCode(String email, String code);
 }
