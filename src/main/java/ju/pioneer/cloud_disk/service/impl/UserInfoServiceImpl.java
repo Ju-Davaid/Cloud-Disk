@@ -18,7 +18,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 
 @Service
@@ -32,6 +35,7 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Resource
     private RedisComponent redisComponent;
     private static final Logger logger = LoggerFactory.getLogger(UserInfoServiceImpl.class);
+
     /**
      * 注册
      *
@@ -70,10 +74,11 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     /**
      * 登录
-     * @param email 邮箱
+     *
+     * @param email    邮箱
      * @param password 密码
      * @return 登录成功后的用户信息
-     * */
+     */
     @Override
     public SessionWebUserDto login(String email, String password) {
         UserInfo user = userInfoMapper.selectByEmail(email);
@@ -103,4 +108,102 @@ public class UserInfoServiceImpl implements UserInfoService {
         redisComponent.saveUserSpaceUse(user.getUserId(), userSpaceDto);
         return sessionWebUserDto;
     }
+
+    /**
+     * 重置密码
+     *
+     * @param email          邮箱
+     * @param password       密码
+     * @param emailCheckCode 邮箱验证码
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void resetPassword(String email, String password, String emailCheckCode) {
+        UserInfo user = userInfoMapper.selectByEmail(email);
+        if (user == null) {
+            throw new BusinessException("邮箱账号不存在");
+        }
+        emailService.checkEmailCode(email, emailCheckCode);
+        user.setPassword(StringTools.encryptPassword(password));
+        UserInfo updateUserInfo = new UserInfo();
+        updateUserInfo.setUserId(user.getUserId());
+        updateUserInfo.setPassword(user.getPassword());
+        userInfoMapper.updateByPrimaryKeySelective(updateUserInfo);
+    }
+
+    /**
+     * 获取用户头像路径
+     *
+     * @param userId 用户ID
+     * @return 用户头像路径
+     */
+    public String getAvatar(String userId) {
+        String avatarFolderName = Constants.FILE_FOLDER + Constants.AVATAR_FOLDER;
+        File avatarFolder = new File(appConfig.getProjectFolder() + avatarFolderName);
+        if (!avatarFolder.exists()) {
+            boolean isCreate = avatarFolder.mkdirs();
+            if (!isCreate) {
+                throw new BusinessException("创建头像文件夹失败");
+            }
+        }
+        return getAvatar(userId, avatarFolderName);
+    }
+
+    /**
+     * 获取用户头像路径
+     *
+     * @param userId           用户ID
+     * @param avatarFolderName 头像文件夹名称
+     * @return 用户头像路径
+     */
+    private String getAvatar(String userId, String avatarFolderName) {
+        String avatarPath = appConfig.getProjectFolder() + avatarFolderName + userId + Constants.AVATAR_EXTENSION_NAME;
+        File avatarFile = new File(avatarPath);
+        File defaultAvatarFile = new File(appConfig.getProjectFolder() + avatarFolderName + Constants.DEFAULT_AVATAR);
+        if (!avatarFile.exists()) {
+            if (!defaultAvatarFile.exists()) {
+                throw new BusinessException("用户默认头像不存在");
+            }
+            avatarPath = defaultAvatarFile.getAbsolutePath();
+        }
+        return avatarPath;
+    }
+
+    /**
+     * 更新用户头像
+     *
+     * @param userId 用户ID
+     * @param avatar 用户头像
+     */
+    @Override
+    public void updateAvatar(String userId, MultipartFile avatar) {
+        File userAvatarFile = new File(getAvatar(userId));
+        File targetFile = new File(userAvatarFile.getParent() + File.separator + userId + Constants.AVATAR_EXTENSION_NAME);
+        logger.info("用户头像文件夹路径：{}, 头像文件夹是否存在：{}", targetFile, targetFile.exists());
+        try {
+            avatar.transferTo(targetFile);
+        } catch (IOException e) {
+            logger.error("上传头像失败", e);
+            throw new BusinessException("上传头像失败");
+        }
+        UserInfo newUserInfo = new UserInfo();
+        newUserInfo.setUserId(userId);
+        newUserInfo.setQqAvatar("");
+        userInfoMapper.updateByPrimaryKeySelective(newUserInfo);
+    }
+
+    /**
+     * 更新用户密码
+     *
+     * @param userId   用户ID
+     * @param password 密码
+     */
+    @Override
+    public void updatePassword(String userId, String password) {
+        UserInfo newUserInfo = new UserInfo();
+        newUserInfo.setUserId(userId);
+        newUserInfo.setPassword(StringTools.encryptPassword(password));
+        userInfoMapper.updateByPrimaryKeySelective(newUserInfo);
+    }
+
 }

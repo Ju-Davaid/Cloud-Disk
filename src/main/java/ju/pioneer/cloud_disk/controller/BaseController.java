@@ -1,10 +1,19 @@
 package ju.pioneer.cloud_disk.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import ju.pioneer.cloud_disk.constants.Constants;
+import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.enums.ResponseCodeEnum;
 import ju.pioneer.cloud_disk.entity.vo.ResponseVO;
 import ju.pioneer.cloud_disk.exception.BusinessException;
+import ju.pioneer.cloud_disk.utils.StringTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 // 基础控制器
 public class BaseController {
@@ -66,5 +75,37 @@ public class BaseController {
         vo.setInfo(ResponseCodeEnum.CODE_500.getMsg());
         vo.setData(t);
         return vo;
+    }
+
+    /**
+     * 获取文件响应
+     *
+     * @param response 响应
+     * @param filePath 文件路径
+     */
+    protected void getFileResponse(HttpServletResponse response, String filePath) {
+        if (!StringTools.isPathValid(filePath)) return;
+        File file = new File(filePath);
+        if (!file.exists() || !file.isFile()) return;
+        try (FileInputStream fileInputStream = new FileInputStream(filePath); OutputStream outputStream = response.getOutputStream()) {
+            byte[] byteData = new byte[1024];
+            int len;
+            while ((len = fileInputStream.read(byteData)) != -1) {
+                outputStream.write(byteData, 0, len);
+            }
+            outputStream.flush();
+        } catch (IOException exception) {
+            logger.error("获取文件响应失败", exception);
+        }
+    }
+
+    /**
+     * 从会话中获取用户信息
+     *
+     * @param session 会话
+     * @return 用户信息
+     */
+    protected SessionWebUserDto getUserInfoFromSession(HttpSession session) {
+        return (SessionWebUserDto) session.getAttribute(Constants.SESSION_WEB_USER_KEY);
     }
 }

@@ -29,4 +29,20 @@ public class Constants {
      * 会话用户key
      */
     public static final String SESSION_WEB_USER_KEY = "sessionWebUserKey";
+    /**
+     * 文件存储路径
+     */
+    public static final String FILE_FOLDER = "/file/";
+    /**
+     * 用户头像存储路径
+     */
+    public static final String AVATAR_FOLDER = "avatar/";
+    /**
+     * 用户头像扩展名
+     */
+    public static final String AVATAR_EXTENSION_NAME = ".jpg";
+    /**
+     * 默认头像
+     */
+    public static final String DEFAULT_AVATAR = "default_avatar.jpg";
 }

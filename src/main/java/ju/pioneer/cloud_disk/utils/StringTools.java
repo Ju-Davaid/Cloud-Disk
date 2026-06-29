@@ -59,4 +59,16 @@ public class StringTools {
     public static boolean checkPassword(String password, String encryptedPassword) {
         return ENCODER.matches(password, encryptedPassword);
     }
+
+    /**
+    * 判断路径是否有效
+    * @param path 路径
+    * @return 是否有效
+    */
+    public static boolean isPathValid(String path) {
+       if(isEmpty(path)){
+           return false;
+       }
+        return !path.contains("../") && !path.contains("..\\");
+    }
 }
