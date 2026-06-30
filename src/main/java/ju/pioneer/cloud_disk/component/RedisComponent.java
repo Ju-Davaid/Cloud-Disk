@@ -3,6 +3,8 @@ package ju.pioneer.cloud_disk.component;
 import jakarta.annotation.Resource;
 import ju.pioneer.cloud_disk.constants.Constants;
 import ju.pioneer.cloud_disk.entity.dto.UserSpaceDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component("redisComponent")
@@ -10,6 +12,8 @@ public class RedisComponent {
 
     @Resource
     private RedisUtils<Object> redisUtils;
+
+    private Logger logger = LoggerFactory.getLogger(RedisComponent.class);
 
     /**
      * 保存用户空间使用量
@@ -29,6 +33,7 @@ public class RedisComponent {
      */
     public UserSpaceDto getUserSpaceUse(String userId) {
         UserSpaceDto userSpaceDto = (UserSpaceDto) redisUtils.get(String.format(Constants.REDIS_USER_SPACE_USE_KEY, userId));
+        logger.info("getUserSpaceUse userId[{}],userSpaceDto[{}]", userId, userSpaceDto);
         if (userSpaceDto == null) {
             userSpaceDto = new UserSpaceDto();
             userSpaceDto.setUseSpace(0L);

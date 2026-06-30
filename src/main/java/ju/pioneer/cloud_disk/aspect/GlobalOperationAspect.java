@@ -1,7 +1,11 @@
 package ju.pioneer.cloud_disk.aspect;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import ju.pioneer.cloud_disk.annotation.GlobalInterceptor;
 import ju.pioneer.cloud_disk.annotation.VerifyParameter;
+import ju.pioneer.cloud_disk.constants.Constants;
+import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.enums.ResponseCodeEnum;
 import ju.pioneer.cloud_disk.entity.enums.TypeEnum;
 import ju.pioneer.cloud_disk.exception.BusinessException;
@@ -15,6 +19,8 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -58,8 +64,9 @@ public class GlobalOperationAspect {
                 return null;
             }
             // 校验登录
-            if (interceptor.checkLogin()) {
+            if (interceptor.checkLogin() || interceptor.checkAdmin()) {
                 logger.info(target.getClass().getSimpleName() + "." + methodName + "检查登录");
+                checkLogin(interceptor.checkAdmin());
             }
             // 校验参数
             if (interceptor.checkParameters()) verifyParameters(method, args);
@@ -133,5 +140,22 @@ public class GlobalOperationAspect {
      */
     private void checkObjectValue(Parameter parameter, Object value) throws BusinessException {
 
+    }
+
+    /**
+     * 校验登录
+     *
+     * @param isCheckAdmin 是否校验管理员权限
+     */
+    private void checkLogin(boolean isCheckAdmin) {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpSession session = request.getSession();
+        SessionWebUserDto sessionWebUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_WEB_USER_KEY);
+        if (sessionWebUserDto == null) {
+            throw new BusinessException(ResponseCodeEnum.CODE_901);
+        }
+        if (isCheckAdmin && !sessionWebUserDto.isAdmin()) {
+            throw new BusinessException(ResponseCodeEnum.CODE_404);
+        }
     }
 }

@@ -23,4 +23,11 @@ public @interface GlobalInterceptor {
      * @return boolean
      */
     boolean checkParameters() default false;
+
+    /**
+     * 是否需要校验管理员权限
+     *
+     * @return boolean
+     */
+    boolean checkAdmin() default false;
 }

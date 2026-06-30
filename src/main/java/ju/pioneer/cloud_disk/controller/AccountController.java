@@ -187,6 +187,7 @@ public class AccountController extends BaseController {
      * @param session 会话
      * @return 用户信息
      */
+    @GlobalInterceptor(checkLogin = true)
     @GetMapping("/getUserInfo")
     public ResponseVO<SessionWebUserDto> getUserInfo(HttpSession session) {
         SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
@@ -199,6 +200,7 @@ public class AccountController extends BaseController {
      * @param session 会话
      * @return 用户空间信息
      */
+    @GlobalInterceptor(checkLogin = true)
     @GetMapping("/getUserSpace")
     public ResponseVO<UserSpaceDto> getUserSpace(HttpSession session) {
         String userId = getUserInfoFromSession(session).getUserId();
@@ -211,6 +213,7 @@ public class AccountController extends BaseController {
      * @param session 会话
      * @return 退出登录结果
      */
+    @GlobalInterceptor(checkLogin = true)
     @GetMapping("/logout")
     public ResponseVO<?> logout(HttpSession session) {
         session.invalidate();
@@ -224,13 +227,10 @@ public class AccountController extends BaseController {
      * @param avatar  用户头像
      * @return 更新结果
      */
-    @GlobalInterceptor(checkParameters = true)
+    @GlobalInterceptor(checkLogin = true, checkParameters = true)
     @PostMapping("/updateAvatar")
     public ResponseVO<SessionWebUserDto> updateAvatar(HttpSession session, @VerifyParameter(required = true) MultipartFile avatar) {
         SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
-        if (sessionWebUserDto == null) {
-            throw new BusinessException("用户未登录");
-        }
         userInfoService.updateAvatar(sessionWebUserDto.getUserId(), avatar);
         sessionWebUserDto.setAvatar(null);
         session.setAttribute(Constants.SESSION_WEB_USER_KEY, sessionWebUserDto);
@@ -240,11 +240,11 @@ public class AccountController extends BaseController {
     /**
      * 更新用户密码
      *
-     * @param session 会话
+     * @param session  会话
      * @param password 密码
      * @return 更新结果
      */
-    @GlobalInterceptor(checkParameters = true)
+    @GlobalInterceptor(checkLogin = true, checkParameters = true)
     @PostMapping("/updatePassword")
     public ResponseVO<?> updatePassword(HttpSession session, @VerifyParameter(required = true, regex = VerifyRegexEnum.PASSWORD) String password) {
         SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
