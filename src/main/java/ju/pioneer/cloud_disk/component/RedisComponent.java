@@ -16,7 +16,7 @@ public class RedisComponent {
     @Resource
     FileInfoMapper fileInfoMapper;
 
-    private Logger logger = LoggerFactory.getLogger(RedisComponent.class);
+    private final Logger logger = LoggerFactory.getLogger(RedisComponent.class);
 
     /**
      * 保存用户空间使用量
@@ -45,5 +45,51 @@ public class RedisComponent {
             saveUserSpaceUse(userId, userSpaceDto);
         }
         return userSpaceDto;
+    }
+
+    /**
+     * 获取临时文件大小
+     *
+     * @param userId 用户ID
+     * @param fileId 文件ID
+     * @return 文件大小
+     */
+    public Long getTempFileSize(String userId, String fileId) {
+        return getFileSizeFromRedis(userId, fileId);
+    }
+
+    /**
+     * 设置临时文件大小
+     *
+     * @param userId   用户ID
+     * @param fileId   文件ID
+     * @param fileSize 文件大小
+     */
+    public void setTempFileSize(String userId, String fileId, Long fileSize) {
+        Long currentSize = getTempFileSize(userId, fileId);
+        String key = String.format(Constants.REDIS_TEMP_FILE_SIZE_KEY, userId, fileId);
+        redisUtils.setExpireTime(key, currentSize + fileSize, Constants.REDIS_TEMP_FILE_SIZE_EXPIRE_TIME);
+
+    }
+
+    /**
+     * 从Redis中获取文件大小
+     *
+     * @param userId 用户ID
+     * @param fileId 文件ID
+     * @return 文件大小
+     */
+    private Long getFileSizeFromRedis(String userId, String fileId) {
+        String key = String.format(Constants.REDIS_TEMP_FILE_SIZE_KEY, userId, fileId);
+        Object sizeObj = redisUtils.get(key);
+        if (sizeObj == null) {
+            return 0L;
+        }
+        if (sizeObj instanceof Integer) {
+            return ((Integer) sizeObj).longValue();
+        } else if (sizeObj instanceof Long) {
+            return (Long) sizeObj;
+        }
+        return 0L;
     }
 }

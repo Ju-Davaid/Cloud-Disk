@@ -45,4 +45,16 @@ public class Constants {
      * 默认头像
      */
     public static final String DEFAULT_AVATAR = "default_avatar.jpg";
+    /**
+     * 临时文件存储路径
+     */
+    public static final String FILE_FOLDER_TEMP = "/temp/";
+    /**
+     * 临时文件大小key
+     */
+    public  static final String REDIS_TEMP_FILE_SIZE_KEY = "cloudDisk:tempFileSize:%s:%s";
+    /**
+     * 临时文件大小过期时间，单位：分钟
+     */
+    public static final int REDIS_TEMP_FILE_SIZE_EXPIRE_TIME = 60;
 }

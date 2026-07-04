@@ -33,8 +33,8 @@ public class FileInfoController extends BaseController {
      * @return 分页结果Vo<FileInfo>
      */
     @GlobalInterceptor(checkLogin = true, checkParameters = true)
-    @PostMapping("/getFileList")
-    public ResponseVO<?> getFileList(HttpSession session, @VerifyParameter(required = true) FileInfoQuery query, @VerifyParameter(required = true) String category) {
+    @PostMapping("/list")
+    public ResponseVO<?> getFileList(HttpSession session, FileInfoQuery query, String category) {
         FileCategoryEnum fileCategoryEnum = FileCategoryEnum.getByCode(category);
         SessionWebUserDto userInfo = getUserInfoFromSession(session);
         if (fileCategoryEnum != null) {
@@ -53,24 +53,25 @@ public class FileInfoController extends BaseController {
      *
      * @param session    会话
      * @param fileId     文件ID
+     * @param filePid    父级ID
      * @param file       文件
      * @param fileName   文件名
-     * @param filePid    父级ID
      * @param fileMd5    文件md5值
      * @param chunkIndex 分块索引
      * @param chunkCount 分块数量
      * @return 上传结果VO
      */
     @GlobalInterceptor(checkLogin = true, checkParameters = true)
-    @PostMapping("/uploadFile")
-    public ResponseVO<UploadResultVo> uploadFile(HttpSession session,
-                                                 String fileId,
-                                                 @VerifyParameter(required = true) MultipartFile file,
-                                                 @VerifyParameter(required = true) String fileName,
-                                                 @VerifyParameter(required = true) String filePid,
-                                                 @VerifyParameter(required = true) String fileMd5,
-                                                 @VerifyParameter(required = true) int chunkIndex,
-                                                 @VerifyParameter(required = true) int chunkCount
+    @PostMapping("/upload")
+    public ResponseVO<UploadResultVo> uploadFile(
+            HttpSession session,
+            String fileId,
+            String filePid,
+            @VerifyParameter(required = true) MultipartFile file,
+            @VerifyParameter(required = true) String fileName,
+            @VerifyParameter(required = true) String fileMd5,
+            @VerifyParameter(required = true) int chunkIndex,
+            @VerifyParameter(required = true) int chunkCount
     ) {
         SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
         UploadResultVo uploadResultVo = fileInfoService.uploadFile(sessionWebUserDto, fileId, file, fileName, filePid, fileMd5, chunkCount, chunkIndex);

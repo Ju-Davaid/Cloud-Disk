@@ -133,7 +133,7 @@ public class RedisUtils<V> {
     }
 
     /**
-     * 存入带过期时间缓存（单位秒）
+     * 存入带过期时间缓存（单位分钟）
      *
      * @param time <=0 永久有效
      */
