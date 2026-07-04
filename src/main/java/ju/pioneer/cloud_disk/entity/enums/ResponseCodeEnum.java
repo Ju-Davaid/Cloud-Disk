@@ -13,7 +13,8 @@ public enum ResponseCodeEnum {
     CODE_400(400, "请求参数错误"),
     CODE_601(601, "信息已存在"),
     CODE_500(500, "服务器返回错误，请联系管理员"),
-    CODE_901(901, "登录过期，请重新登录");
+    CODE_901(901, "登录过期，请重新登录"),
+    CODE_904(904, "用户空间不足");
     private final int code;
     private final String msg;
 }

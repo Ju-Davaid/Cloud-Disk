@@ -9,6 +9,7 @@ import ju.pioneer.cloud_disk.entity.dto.UserSpaceDto;
 import ju.pioneer.cloud_disk.entity.enums.UserStatuseEnum;
 import ju.pioneer.cloud_disk.entity.po.UserInfo;
 import ju.pioneer.cloud_disk.exception.BusinessException;
+import ju.pioneer.cloud_disk.mapper.FileInfoMapper;
 import ju.pioneer.cloud_disk.mapper.UserInfoMapper;
 import ju.pioneer.cloud_disk.service.EmailCodeService;
 import ju.pioneer.cloud_disk.service.UserInfoService;
@@ -34,6 +35,8 @@ public class UserInfoServiceImpl implements UserInfoService {
     private AppConfig appConfig;
     @Resource
     private RedisComponent redisComponent;
+    @Resource
+    private FileInfoMapper fileInfoMapper;
     private static final Logger logger = LoggerFactory.getLogger(UserInfoServiceImpl.class);
 
     /**
@@ -103,7 +106,8 @@ public class UserInfoServiceImpl implements UserInfoService {
         sessionWebUserDto.setAdmin(ArrayUtils.contains(appConfig.getAdminEmails().split(","), user.getEmail()));
         // 设置用户空间信息
         UserSpaceDto userSpaceDto = new UserSpaceDto();
-        userSpaceDto.setUseSpace(user.getUseSpace());
+        long userUseSpace = fileInfoMapper.selectUseSpace(user.getUserId());
+        userSpaceDto.setUseSpace(userUseSpace);
         userSpaceDto.setTotalSpace(user.getTotalSpace());
         redisComponent.saveUserSpaceUse(user.getUserId(), userSpaceDto);
         return sessionWebUserDto;

@@ -1,224 +1,365 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="ju.pioneer.cloud_disk.mapper.FileInfoMapper">
-  <resultMap id="BaseResultMap" type="ju.pioneer.cloud_disk.entity.po.FileInfo">
-    <id column="file_id" jdbcType="VARCHAR" property="fileId" />
-    <id column="user_id" jdbcType="VARCHAR" property="userId" />
-    <result column="file_md5" jdbcType="VARCHAR" property="fileMd5" />
-    <result column="file_pid" jdbcType="VARCHAR" property="filePid" />
-    <result column="file_size" jdbcType="BIGINT" property="fileSize" />
-    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
-    <result column="file_cover" jdbcType="VARCHAR" property="fileCover" />
-    <result column="file_path" jdbcType="VARCHAR" property="filePath" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
-    <result column="last_update_time" jdbcType="TIMESTAMP" property="lastUpdateTime" />
-    <result column="folder_type" jdbcType="BIT" property="folderType" />
-    <result column="file_category" jdbcType="BIT" property="fileCategory" />
-    <result column="file_type" jdbcType="BIT" property="fileType" />
-    <result column="status" jdbcType="BIT" property="status" />
-    <result column="recovery_time" jdbcType="TIMESTAMP" property="recoveryTime" />
-    <result column="del_flag" jdbcType="BIT" property="delFlag" />
-  </resultMap>
-  <sql id="Base_Column_List">
-    file_id, user_id, file_md5, file_pid, file_size, file_name, file_cover, file_path, 
-    create_time, last_update_time, folder_type, file_category, file_type, status, recovery_time, 
-    del_flag
-  </sql>
-  <select id="selectByPrimaryKey" parameterType="ju.pioneer.cloud_disk.entity.po.FileInfoKey" resultMap="BaseResultMap">
-    select 
-    <include refid="Base_Column_List" />
-    from file_info
-    where file_id = #{fileId,jdbcType=VARCHAR}
-      and user_id = #{userId,jdbcType=VARCHAR}
-  </select>
-  <delete id="deleteByPrimaryKey" parameterType="ju.pioneer.cloud_disk.entity.po.FileInfoKey">
-    delete from file_info
-    where file_id = #{fileId,jdbcType=VARCHAR}
-      and user_id = #{userId,jdbcType=VARCHAR}
-  </delete>
-  <insert id="insert" parameterType="ju.pioneer.cloud_disk.entity.po.FileInfo">
-    insert into file_info (file_id, user_id, file_md5, 
-      file_pid, file_size, file_name, 
-      file_cover, file_path, create_time, 
-      last_update_time, folder_type, file_category, 
-      file_type, status, recovery_time, 
-      del_flag)
-    values (#{fileId,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR}, #{fileMd5,jdbcType=VARCHAR}, 
-      #{filePid,jdbcType=VARCHAR}, #{fileSize,jdbcType=BIGINT}, #{fileName,jdbcType=VARCHAR}, 
-      #{fileCover,jdbcType=VARCHAR}, #{filePath,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, 
-      #{lastUpdateTime,jdbcType=TIMESTAMP}, #{folderType,jdbcType=BIT}, #{fileCategory,jdbcType=BIT}, 
-      #{fileType,jdbcType=BIT}, #{status,jdbcType=BIT}, #{recoveryTime,jdbcType=TIMESTAMP}, 
-      #{delFlag,jdbcType=BIT})
-  </insert>
-  <insert id="insertSelective" parameterType="ju.pioneer.cloud_disk.entity.po.FileInfo">
-    insert into file_info
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="fileId != null">
-        file_id,
-      </if>
-      <if test="userId != null">
-        user_id,
-      </if>
-      <if test="fileMd5 != null">
-        file_md5,
-      </if>
-      <if test="filePid != null">
-        file_pid,
-      </if>
-      <if test="fileSize != null">
-        file_size,
-      </if>
-      <if test="fileName != null">
-        file_name,
-      </if>
-      <if test="fileCover != null">
-        file_cover,
-      </if>
-      <if test="filePath != null">
-        file_path,
-      </if>
-      <if test="createTime != null">
-        create_time,
-      </if>
-      <if test="lastUpdateTime != null">
-        last_update_time,
-      </if>
-      <if test="folderType != null">
-        folder_type,
-      </if>
-      <if test="fileCategory != null">
-        file_category,
-      </if>
-      <if test="fileType != null">
-        file_type,
-      </if>
-      <if test="status != null">
-        status,
-      </if>
-      <if test="recoveryTime != null">
-        recovery_time,
-      </if>
-      <if test="delFlag != null">
-        del_flag,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="fileId != null">
-        #{fileId,jdbcType=VARCHAR},
-      </if>
-      <if test="userId != null">
-        #{userId,jdbcType=VARCHAR},
-      </if>
-      <if test="fileMd5 != null">
-        #{fileMd5,jdbcType=VARCHAR},
-      </if>
-      <if test="filePid != null">
-        #{filePid,jdbcType=VARCHAR},
-      </if>
-      <if test="fileSize != null">
-        #{fileSize,jdbcType=BIGINT},
-      </if>
-      <if test="fileName != null">
-        #{fileName,jdbcType=VARCHAR},
-      </if>
-      <if test="fileCover != null">
-        #{fileCover,jdbcType=VARCHAR},
-      </if>
-      <if test="filePath != null">
-        #{filePath,jdbcType=VARCHAR},
-      </if>
-      <if test="createTime != null">
-        #{createTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="lastUpdateTime != null">
-        #{lastUpdateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="folderType != null">
-        #{folderType,jdbcType=BIT},
-      </if>
-      <if test="fileCategory != null">
-        #{fileCategory,jdbcType=BIT},
-      </if>
-      <if test="fileType != null">
-        #{fileType,jdbcType=BIT},
-      </if>
-      <if test="status != null">
-        #{status,jdbcType=BIT},
-      </if>
-      <if test="recoveryTime != null">
-        #{recoveryTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="delFlag != null">
-        #{delFlag,jdbcType=BIT},
-      </if>
-    </trim>
-  </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="ju.pioneer.cloud_disk.entity.po.FileInfo">
-    update file_info
-    <set>
-      <if test="fileMd5 != null">
-        file_md5 = #{fileMd5,jdbcType=VARCHAR},
-      </if>
-      <if test="filePid != null">
-        file_pid = #{filePid,jdbcType=VARCHAR},
-      </if>
-      <if test="fileSize != null">
-        file_size = #{fileSize,jdbcType=BIGINT},
-      </if>
-      <if test="fileName != null">
-        file_name = #{fileName,jdbcType=VARCHAR},
-      </if>
-      <if test="fileCover != null">
-        file_cover = #{fileCover,jdbcType=VARCHAR},
-      </if>
-      <if test="filePath != null">
-        file_path = #{filePath,jdbcType=VARCHAR},
-      </if>
-      <if test="createTime != null">
-        create_time = #{createTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="lastUpdateTime != null">
-        last_update_time = #{lastUpdateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="folderType != null">
-        folder_type = #{folderType,jdbcType=BIT},
-      </if>
-      <if test="fileCategory != null">
-        file_category = #{fileCategory,jdbcType=BIT},
-      </if>
-      <if test="fileType != null">
-        file_type = #{fileType,jdbcType=BIT},
-      </if>
-      <if test="status != null">
-        status = #{status,jdbcType=BIT},
-      </if>
-      <if test="recoveryTime != null">
-        recovery_time = #{recoveryTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="delFlag != null">
-        del_flag = #{delFlag,jdbcType=BIT},
-      </if>
-    </set>
-    where file_id = #{fileId,jdbcType=VARCHAR}
-      and user_id = #{userId,jdbcType=VARCHAR}
-  </update>
-  <update id="updateByPrimaryKey" parameterType="ju.pioneer.cloud_disk.entity.po.FileInfo">
-    update file_info
-    set file_md5 = #{fileMd5,jdbcType=VARCHAR},
-      file_pid = #{filePid,jdbcType=VARCHAR},
-      file_size = #{fileSize,jdbcType=BIGINT},
-      file_name = #{fileName,jdbcType=VARCHAR},
-      file_cover = #{fileCover,jdbcType=VARCHAR},
-      file_path = #{filePath,jdbcType=VARCHAR},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      last_update_time = #{lastUpdateTime,jdbcType=TIMESTAMP},
-      folder_type = #{folderType,jdbcType=BIT},
-      file_category = #{fileCategory,jdbcType=BIT},
-      file_type = #{fileType,jdbcType=BIT},
-      status = #{status,jdbcType=BIT},
-      recovery_time = #{recoveryTime,jdbcType=TIMESTAMP},
-      del_flag = #{delFlag,jdbcType=BIT}
-    where file_id = #{fileId,jdbcType=VARCHAR}
-      and user_id = #{userId,jdbcType=VARCHAR}
-  </update>
+
+    <!-- 实体映射 -->
+    <resultMap id="base_result_map" type="ju.pioneer.cloud_disk.entity.po.FileInfo">
+        <result column="file_id" property="fileId"/>
+        <result column="user_id" property="userId"/>
+        <result column="file_md5" property="fileMd5"/>
+        <result column="file_pid" property="filePid"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_cover" property="fileCover"/>
+        <result column="file_path" property="filePath"/>
+        <result column="create_time" property="createTime"/>
+        <result column="last_update_time" property="lastUpdateTime"/>
+        <result column="folder_type" property="folderType"/>
+        <result column="file_category" property="fileCategory"/>
+        <result column="file_type" property="fileType"/>
+        <result column="status" property="status"/>
+        <result column="recovery_time" property="recoveryTime"/>
+        <result column="del_flag" property="delFlag"/>
+    </resultMap>
+
+    <!-- 通用查询列 -->
+    <sql id="base_column_list">
+        file_id,user_id,file_md5,file_pid,file_size,
+        file_name,file_cover,file_path,create_time,last_update_time,
+        folder_type,file_category,file_type,status,recovery_time,del_flag
+    </sql>
+
+    <!-- 通用更新SET片段，所有update复用 -->
+    <sql id="common_set_clause">
+        <if test="bean.fileMd5 != null">file_md5 = #{bean.fileMd5},</if>
+        <if test="bean.filePid != null">file_pid = #{bean.filePid},</if>
+        <if test="bean.fileSize != null">file_size = #{bean.fileSize},</if>
+        <if test="bean.fileName != null">file_name = #{bean.fileName},</if>
+        <if test="bean.fileCover != null">file_cover = #{bean.fileCover},</if>
+        <if test="bean.filePath != null">file_path = #{bean.filePath},</if>
+        <if test="bean.createTime != null">create_time = #{bean.createTime},</if>
+        <if test="bean.lastUpdateTime != null">last_update_time = #{bean.lastUpdateTime},</if>
+        <if test="bean.folderType != null">folder_type = #{bean.folderType},</if>
+        <if test="bean.fileCategory != null">file_category = #{bean.fileCategory},</if>
+        <if test="bean.fileType != null">file_type = #{bean.fileType},</if>
+        <if test="bean.status != null">status = #{bean.status},</if>
+        <if test="bean.recoveryTime != null">recovery_time = #{bean.recoveryTime},</if>
+        <if test="bean.delFlag != null">del_flag = #{bean.delFlag},</if>
+    </sql>
+
+    <!-- 基础等值查询条件 -->
+    <sql id="base_condition_filed">
+        <if test="query.fileId != null and query.fileId!=''">and file_id = #{query.fileId}</if>
+        <if test="query.userId != null and query.userId!=''">and user_id = #{query.userId}</if>
+        <if test="query.fileMd5 != null and query.fileMd5!=''">and file_md5 = #{query.fileMd5}</if>
+        <if test="query.filePid != null and query.filePid!=''">and file_pid = #{query.filePid}</if>
+        <if test="query.fileSize != null">and file_size = #{query.fileSize}</if>
+        <if test="query.fileName != null and query.fileName!=''">and file_name = #{query.fileName}</if>
+        <if test="query.fileCover != null and query.fileCover!=''">and file_cover = #{query.fileCover}</if>
+        <if test="query.filePath != null and query.filePath!=''">and file_path = #{query.filePath}</if>
+        <if test="query.createTime != null and query.createTime!=''">
+            <![CDATA[ and DATE(create_time) = STR_TO_DATE(#{query.createTime}, '%Y-%m-%d') ]]>
+        </if>
+        <if test="query.lastUpdateTime != null and query.lastUpdateTime!=''">
+            <![CDATA[ and DATE(last_update_time) = STR_TO_DATE(#{query.lastUpdateTime}, '%Y-%m-%d') ]]>
+        </if>
+        <if test="query.folderType != null">and folder_type = #{query.folderType}</if>
+        <if test="query.fileCategory != null">and file_category = #{query.fileCategory}</if>
+        <if test="query.fileType != null">and file_type = #{query.fileType}</if>
+        <if test="query.status != null">and status = #{query.status}</if>
+        <if test="query.recoveryTime != null and query.recoveryTime!=''">
+            <![CDATA[ and DATE(recovery_time) = STR_TO_DATE(#{query.recoveryTime}, '%Y-%m-%d') ]]>
+        </if>
+        <if test="query.delFlag != null">and del_flag = #{query.delFlag}</if>
+
+        <!-- IN集合条件 -->
+        <if test="query.fileIdArray!=null and query.fileIdArray.length>0">
+            and file_id in(<foreach collection="query.fileIdArray" item="item" separator=",">#{item}</foreach>)
+        </if>
+        <if test="query.filePidArray!=null and query.filePidArray.length>0">
+            and file_pid in(<foreach collection="query.filePidArray" item="item" separator=",">#{item}</foreach>)
+        </if>
+        <if test="query.excludeFileIdArray!=null and query.excludeFileIdArray.length>0">
+            and file_id not in(<foreach collection="query.excludeFileIdArray" separator="," item="item">#{item}</foreach>)
+        </if>
+    </sql>
+
+    <!-- 完整查询条件：等值+模糊+时间区间+业务标记 -->
+    <sql id="query_condition"   >
+        <where>
+            <include refid="base_condition_filed"/>
+            <!-- 模糊查询 -->
+            <if test="query.fileIdFuzzy!= null and query.fileIdFuzzy!=''">
+                and file_id like concat('%', #{query.fileIdFuzzy}, '%')
+            </if>
+            <if test="query.userIdFuzzy!= null and query.userIdFuzzy!=''">
+                and user_id like concat('%', #{query.userIdFuzzy}, '%')
+            </if>
+            <if test="query.fileMd5Fuzzy!= null and query.fileMd5Fuzzy!=''">
+                and file_md5 like concat('%', #{query.fileMd5Fuzzy}, '%')
+            </if>
+            <if test="query.filePidFuzzy!= null and query.filePidFuzzy!=''">
+                and file_pid like concat('%', #{query.filePidFuzzy}, '%')
+            </if>
+            <if test="query.fileNameFuzzy!= null and query.fileNameFuzzy!=''">
+                and file_name like concat('%', #{query.fileNameFuzzy}, '%')
+            </if>
+            <if test="query.fileCoverFuzzy!= null and query.fileCoverFuzzy!=''">
+                and file_cover like concat('%', #{query.fileCoverFuzzy}, '%')
+            </if>
+            <if test="query.filePathFuzzy!= null and query.filePathFuzzy!=''">
+                and file_path like concat('%', #{query.filePathFuzzy}, '%')
+            </if>
+
+            <!-- 时间区间优化，DATE范围匹配全天 -->
+            <if test="query.createTimeStart!= null and query.createTimeStart!=''">
+                <![CDATA[ and create_time >= STR_TO_DATE(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+            </if>
+            <if test="query.createTimeEnd!= null and query.createTimeEnd!=''">
+                <![CDATA[ and create_time < DATE_ADD(STR_TO_DATE(#{query.createTimeEnd},'%Y-%m-%d'),INTERVAL 1 DAY) ]]>
+            </if>
+            <if test="query.lastUpdateTimeStart!= null and query.lastUpdateTimeStart!=''">
+                <![CDATA[ and last_update_time >= STR_TO_DATE(#{query.lastUpdateTimeStart}, '%Y-%m-%d') ]]>
+            </if>
+            <if test="query.lastUpdateTimeEnd!= null and query.lastUpdateTimeEnd!=''">
+                <![CDATA[ and last_update_time < DATE_ADD(STR_TO_DATE(#{query.lastUpdateTimeEnd},'%Y-%m-%d'),INTERVAL 1 DAY) ]]>
+            </if>
+            <if test="query.recoveryTimeStart!= null and query.recoveryTimeStart!=''">
+                <![CDATA[ and recovery_time >= STR_TO_DATE(#{query.recoveryTimeStart}, '%Y-%m-%d') ]]>
+            </if>
+            <if test="query.recoveryTimeEnd!= null and query.recoveryTimeEnd!=''">
+                <![CDATA[ and recovery_time < DATE_ADD(STR_TO_DATE(#{query.recoveryTimeEnd},'%Y-%m-%d'),INTERVAL 1 DAY) ]]>
+            </if>
+
+            <!-- 过期回收站文件 -->
+            <if test="query.queryExpire!=null and query.queryExpire">
+                <![CDATA[ and recovery_time < DATE_SUB(NOW(),INTERVAL 10 DAY) ]]>
+            </if>
+        </where>
+    </sql>
+
+    <!-- 文件列表查询 LEFT JOIN 关联用户表，替代标量子查询提升性能 -->
+    <select id="selectList" resultMap="base_result_map">
+        SELECT
+        <include refid="base_column_list"/>
+        <if test="query.queryNickName!=null and query.queryNickName">
+            ,u.nick_name AS nickName
+        </if>
+        FROM file_info f
+        <if test="query.queryNickName!=null and query.queryNickName">
+            LEFT JOIN user_info u ON f.user_id = u.user_id
+        </if>
+        <include refid="query_condition"/>
+        <!-- 排序建议后端代码做字段白名单过滤，防止SQL注入 -->
+        <if test="query.orderBy!=null">
+            ORDER BY ${query.orderBy}
+        </if>
+        <if test="query.simplePage!=null">
+            LIMIT #{query.simplePage.start},#{query.simplePage.end}
+        </if>
+    </select>
+
+    <!-- 查询总数 -->
+    <select id="selectCount" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM file_info
+        <include refid="query_condition"/>
+    </select>
+
+    <!-- 单条动态插入 -->
+    <insert id="insert" parameterType="ju.pioneer.cloud_disk.entity.query.FileInfoQuery">
+        INSERT INTO file_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bean.fileId != null">file_id,</if>
+            <if test="bean.userId != null">user_id,</if>
+            <if test="bean.fileMd5 != null">file_md5,</if>
+            <if test="bean.filePid != null">file_pid,</if>
+            <if test="bean.fileSize != null">file_size,</if>
+            <if test="bean.fileName != null">file_name,</if>
+            <if test="bean.fileCover != null">file_cover,</if>
+            <if test="bean.filePath != null">file_path,</if>
+            <if test="bean.createTime != null">create_time,</if>
+            <if test="bean.lastUpdateTime != null">last_update_time,</if>
+            <if test="bean.folderType != null">folder_type,</if>
+            <if test="bean.fileCategory != null">file_category,</if>
+            <if test="bean.fileType != null">file_type,</if>
+            <if test="bean.status != null">status,</if>
+            <if test="bean.recoveryTime != null">recovery_time,</if>
+            <if test="bean.delFlag != null">del_flag,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="bean.fileId!=null">#{bean.fileId},</if>
+            <if test="bean.userId!=null">#{bean.userId},</if>
+            <if test="bean.fileMd5!=null">#{bean.fileMd5},</if>
+            <if test="bean.filePid!=null">#{bean.filePid},</if>
+            <if test="bean.fileSize!=null">#{bean.fileSize},</if>
+            <if test="bean.fileName!=null">#{bean.fileName},</if>
+            <if test="bean.fileCover!=null">#{bean.fileCover},</if>
+            <if test="bean.filePath!=null">#{bean.filePath},</if>
+            <if test="bean.createTime!=null">#{bean.createTime},</if>
+            <if test="bean.lastUpdateTime!=null">#{bean.lastUpdateTime},</if>
+            <if test="bean.folderType!=null">#{bean.folderType},</if>
+            <if test="bean.fileCategory!=null">#{bean.fileCategory},</if>
+            <if test="bean.fileType!=null">#{bean.fileType},</if>
+            <if test="bean.status!=null">#{bean.status},</if>
+            <if test="bean.recoveryTime!=null">#{bean.recoveryTime},</if>
+            <if test="bean.delFlag!=null">#{bean.delFlag},</if>
+        </trim>
+    </insert>
+
+    <!-- 单条存在即更新 -->
+    <insert id="insertOrUpdate" parameterType="ju.pioneer.cloud_disk.entity.po.FileInfo">
+        INSERT INTO file_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bean.fileId != null">file_id,</if>
+            <if test="bean.userId != null">user_id,</if>
+            <if test="bean.fileMd5 != null">file_md5,</if>
+            <if test="bean.filePid != null">file_pid,</if>
+            <if test="bean.fileSize != null">file_size,</if>
+            <if test="bean.fileName != null">file_name,</if>
+            <if test="bean.fileCover != null">file_cover,</if>
+            <if test="bean.filePath != null">file_path,</if>
+            <if test="bean.createTime != null">create_time,</if>
+            <if test="bean.lastUpdateTime != null">last_update_time,</if>
+            <if test="bean.folderType != null">folder_type,</if>
+            <if test="bean.fileCategory != null">file_category,</if>
+            <if test="bean.fileType != null">file_type,</if>
+            <if test="bean.status != null">status,</if>
+            <if test="bean.recoveryTime != null">recovery_time,</if>
+            <if test="bean.delFlag != null">del_flag,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="bean.fileId!=null">#{bean.fileId},</if>
+            <if test="bean.userId!=null">#{bean.userId},</if>
+            <if test="bean.fileMd5!=null">#{bean.fileMd5},</if>
+            <if test="bean.filePid!=null">#{bean.filePid},</if>
+            <if test="bean.fileSize!=null">#{bean.fileSize},</if>
+            <if test="bean.fileName!=null">#{bean.fileName},</if>
+            <if test="bean.fileCover!=null">#{bean.fileCover},</if>
+            <if test="bean.filePath!=null">#{bean.filePath},</if>
+            <if test="bean.createTime!=null">#{bean.createTime},</if>
+            <if test="bean.lastUpdateTime!=null">#{bean.lastUpdateTime},</if>
+            <if test="bean.folderType!=null">#{bean.folderType},</if>
+            <if test="bean.fileCategory!=null">#{bean.fileCategory},</if>
+            <if test="bean.fileType!=null">#{bean.fileType},</if>
+            <if test="bean.status!=null">#{bean.status},</if>
+            <if test="bean.recoveryTime!=null">#{bean.recoveryTime},</if>
+            <if test="bean.delFlag!=null">#{bean.delFlag},</if>
+        </trim>
+        ON DUPLICATE KEY UPDATE
+        <include refid="common_set_clause"/>
+    </insert>
+
+    <!-- 批量插入 -->
+    <insert id="insertBatch">
+        INSERT INTO file_info(
+        file_id,user_id,file_md5,file_pid,file_size,
+        file_name,file_cover,file_path,create_time,last_update_time,
+        folder_type,file_category,file_type,status,recovery_time,del_flag
+        )VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.fileId},#{item.userId},#{item.fileMd5},#{item.filePid},#{item.fileSize},
+            #{item.fileName},#{item.fileCover},#{item.filePath},#{item.createTime},#{item.lastUpdateTime},
+            #{item.folderType},#{item.fileCategory},#{item.fileType},#{item.status},#{item.recoveryTime},#{item.delFlag}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 批量插入或更新 -->
+    <insert id="insertOrUpdateBatch">
+        INSERT INTO file_info(
+        file_id,user_id,file_md5,file_pid,file_size,
+        file_name,file_cover,file_path,create_time,last_update_time,
+        folder_type,file_category,file_type,status,recovery_time,del_flag
+        )VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.fileId},#{item.userId},#{item.fileMd5},#{item.filePid},#{item.fileSize},
+            #{item.fileName},#{item.fileCover},#{item.filePath},#{item.createTime},#{item.lastUpdateTime},
+            #{item.folderType},#{item.fileCategory},#{item.fileType},#{item.status},#{item.recoveryTime},#{item.delFlag}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        file_id = VALUES(file_id),
+        user_id = VALUES(user_id),
+        file_md5 = VALUES(file_md5),
+        file_pid = VALUES(file_pid),
+        file_size = VALUES(file_size),
+        file_name = VALUES(file_name),
+        file_cover = VALUES(file_cover),
+        file_path = VALUES(file_path),
+        create_time = VALUES(create_time),
+        last_update_time = VALUES(last_update_time),
+        folder_type = VALUES(folder_type),
+        file_category = VALUES(file_category),
+        file_type = VALUES(file_type),
+        status = VALUES(status),
+        recovery_time = VALUES(recovery_time),
+        del_flag = VALUES(del_flag)
+    </insert>
+
+    <!-- 根据fileId+userId更新，复用通用set片段 -->
+    <update id="updateByFileIdAndUserId">
+        UPDATE file_info
+        <set>
+            <include refid="common_set_clause"/>
+        </set>
+        WHERE file_id=#{fileId} AND user_id=#{userId}
+    </update>
+
+    <!-- 按主键删除 -->
+    <delete id="deleteByFileIdAndUserId">
+        DELETE FROM file_info WHERE file_id = #{fileId} AND user_id = #{userId}
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByFileIdAndUserId" resultMap="base_result_map">
+        SELECT <include refid="base_column_list"/>
+        FROM file_info WHERE file_id=#{fileId} AND user_id=#{userId}
+    </select>
+
+    <!-- 带旧状态条件更新 -->
+    <update id="updateFileStatusWithOldStatus">
+        UPDATE file_info
+        <set>
+            <include refid="common_set_clause"/>
+        </set>
+        WHERE file_id = #{fileId}
+        AND user_id = #{userId}
+        AND status = #{oldStatus}
+    </update>
+
+    <!-- 批量更新删除标记 -->
+    <update id="updateFileDelFlagBatch">
+        UPDATE file_info
+        <set>
+            <include refid="common_set_clause"/>
+        </set>
+        WHERE user_id = #{userId}
+        <if test="filePidList!=null">AND file_pid IN(<foreach collection="filePidList" separator="," item="item">#{item}</foreach>)</if>
+        <if test="fileIdList!=null">AND file_id IN(<foreach collection="fileIdList" separator="," item="item">#{item}</foreach>)</if>
+        <if test="oldDelFlag!=null">AND del_flag = #{oldDelFlag}</if>
+    </update>
+
+    <!-- 批量逻辑删除，统一del_flag状态（建议规范：-1彻底删除，0回收站，2正常） -->
+    <update id="delFileBatch">
+        UPDATE file_info SET del_flag = -1
+        WHERE user_id = #{userId}
+        <if test="filePidList!=null">AND file_pid IN(<foreach collection="filePidList" separator="," item="item">#{item}</foreach>)</if>
+        <if test="fileIdList!=null">AND file_id IN(<foreach collection="fileIdList" separator="," item="item">#{item}</foreach>)</if>
+        <if test="oldDelFlag!=null">AND del_flag = #{oldDelFlag}</if>
+    </update>
+
+    <!-- 查询用户已使用存储空间 -->
+     <select id="selectUseSpace" resultType="java.lang.Long">
+        SELECT IFNULL(SUM(file_size), 0)
+        FROM file_info
+        WHERE user_id = #{userId} AND del_flag != -1
+    </select>
+
+    <!-- 删除用户全部文件 -->
+    <delete id="deleteFileByUserId">
+        DELETE FROM file_info WHERE user_id = #{userId}
+    </delete>
 </mapper>

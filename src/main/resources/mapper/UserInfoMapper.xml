@@ -163,6 +163,29 @@
             total_space     = #{totalSpace,jdbcType=BIGINT}
         where user_id = #{userId,jdbcType=VARCHAR}
     </update>
+    <!--更新用户空间-->
+    <update id="updateUserSpace">
+        update user_info
+        <set>
+            <if test="useSpace != null">
+                use_space = use_space + #{useSpace,jdbcType=BIGINT},
+            </if>
+            <if test="totalSpace != null">
+                total_space = total_space + #{totalSpace,jdbcType=BIGINT},
+            </if>
+        </set>
+        where user_id = #{userId,jdbcType=VARCHAR}
+        <if test="useSpace != null">
+            and <![CDATA[
+                (use_space + #{useSpace}) <= total_space
+            ]]>
+        </if>
+        <if test="totalSpace != null">
+            and <![CDATA[
+                (total_space + #{totalSpace}) >= use_space
+            ]]>
+        </if>
+    </update>
     <!-- 根据邮箱查询用户信息 -->
     <select id="selectByEmail" parameterType="java.lang.String" resultType="ju.pioneer.cloud_disk.entity.po.UserInfo">
         select *

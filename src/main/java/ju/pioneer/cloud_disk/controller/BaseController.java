@@ -5,11 +5,14 @@ import jakarta.servlet.http.HttpSession;
 import ju.pioneer.cloud_disk.constants.Constants;
 import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.enums.ResponseCodeEnum;
+import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
 import ju.pioneer.cloud_disk.entity.vo.ResponseVO;
 import ju.pioneer.cloud_disk.exception.BusinessException;
+import ju.pioneer.cloud_disk.utils.CopyTools;
 import ju.pioneer.cloud_disk.utils.StringTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -107,5 +110,23 @@ public class BaseController {
      */
     protected SessionWebUserDto getUserInfoFromSession(HttpSession session) {
         return (SessionWebUserDto) session.getAttribute(Constants.SESSION_WEB_USER_KEY);
+    }
+
+    /**
+     * 分页结果VO转换
+     *
+     * @param result 分页结果VO
+     * @param tClass 目标VO类型
+     * @return 目标VO
+     */
+    protected <S, T> PaginateResultVo<T> convertPaginateResultVo(PaginateResultVo<S> result, Class<T> tClass) {
+        PaginateResultVo<T> resultVo = new PaginateResultVo<>();
+        resultVo.setList(CopyTools.copyList(result.getList(), tClass));
+        resultVo.setPageNo(result.getPageNo());
+        resultVo.setPageTotal(result.getPageTotal());
+        resultVo.setTotalCount(result.getTotalCount());
+        resultVo.setPageSize(result.getPageSize());
+        return resultVo;
+
     }
 }

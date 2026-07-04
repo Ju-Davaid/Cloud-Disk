@@ -31,9 +31,9 @@ public class FileInfo extends FileInfoKey {
 
     private Boolean fileType;
 
-    private Boolean status;
+    private int status;
 
     private Date recoveryTime;
 
-    private Boolean delFlag;
+    private int delFlag;
 }

@@ -3,6 +3,7 @@ package ju.pioneer.cloud_disk.component;
 import jakarta.annotation.Resource;
 import ju.pioneer.cloud_disk.constants.Constants;
 import ju.pioneer.cloud_disk.entity.dto.UserSpaceDto;
+import ju.pioneer.cloud_disk.mapper.FileInfoMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,8 @@ public class RedisComponent {
 
     @Resource
     private RedisUtils<Object> redisUtils;
+    @Resource
+    FileInfoMapper fileInfoMapper;
 
     private Logger logger = LoggerFactory.getLogger(RedisComponent.class);
 
@@ -35,8 +38,9 @@ public class RedisComponent {
         UserSpaceDto userSpaceDto = (UserSpaceDto) redisUtils.get(String.format(Constants.REDIS_USER_SPACE_USE_KEY, userId));
         logger.info("getUserSpaceUse userId[{}],userSpaceDto[{}]", userId, userSpaceDto);
         if (userSpaceDto == null) {
+            long useSpace = fileInfoMapper.selectUseSpace(userId);
             userSpaceDto = new UserSpaceDto();
-            userSpaceDto.setUseSpace(0L);
+            userSpaceDto.setUseSpace(useSpace);
             userSpaceDto.setTotalSpace(Constants.DEFAULT_SPACE);
             saveUserSpaceUse(userId, userSpaceDto);
         }
