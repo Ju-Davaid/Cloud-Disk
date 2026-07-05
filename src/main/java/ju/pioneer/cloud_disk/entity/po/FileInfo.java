@@ -25,11 +25,11 @@ public class FileInfo extends FileInfoKey {
 
     private Date lastUpdateTime;
 
-    private Boolean folderType;
+    private int folderType;
 
-    private Boolean fileCategory;
+    private int fileCategory;
 
-    private Boolean fileType;
+    private int fileType;
 
     private int status;
 

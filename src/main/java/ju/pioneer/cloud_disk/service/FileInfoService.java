@@ -5,8 +5,10 @@ import ju.pioneer.cloud_disk.entity.po.FileInfo;
 import ju.pioneer.cloud_disk.entity.query.FileInfoQuery;
 import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
 import ju.pioneer.cloud_disk.entity.vo.UploadResultVo;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface FileInfoService {
@@ -34,6 +36,27 @@ public interface FileInfoService {
      */
     Integer findCountByParam(FileInfoQuery param);
 
+    /**
+     * 上传文件
+     *
+     * @param sessionWebUserDto 会话用户dto
+     * @param fileId            文件id
+     * @param file              文件
+     * @param fileName          文件名
+     * @param parentId          父文件id
+     * @param fileMd5           文件md5值
+     * @param chunkSize         分块大小
+     * @param chunkIndex        分块索引
+     * @return 上传结果vo
+     */
     UploadResultVo uploadFile(SessionWebUserDto sessionWebUserDto, String fileId, MultipartFile file, String fileName, String parentId, String fileMd5, int chunkSize, int chunkIndex);
 
+    /**
+     * 传输文件到目标目录
+     *
+     * @param fileId            文件id
+     * @param sessionWebUserDto 会话用户dto
+     */
+    @Async
+    void transferFile(String fileId, SessionWebUserDto sessionWebUserDto);
 }

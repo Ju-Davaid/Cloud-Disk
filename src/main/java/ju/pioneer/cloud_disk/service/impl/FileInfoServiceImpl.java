@@ -17,14 +17,21 @@ import ju.pioneer.cloud_disk.mapper.FileInfoMapper;
 import ju.pioneer.cloud_disk.mapper.UserInfoMapper;
 import ju.pioneer.cloud_disk.service.FileInfoService;
 import ju.pioneer.cloud_disk.utils.StringTools;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -40,6 +47,9 @@ public class FileInfoServiceImpl implements FileInfoService {
     private UserInfoMapper userInfoMapper;
     @Resource
     private AppConfig appConfig;
+    @Resource
+    @Lazy
+    private FileInfoService fileInfoService;
 
     /**
      * 根据参数查询文件信息列表
@@ -96,6 +106,8 @@ public class FileInfoServiceImpl implements FileInfoService {
     @Transactional(rollbackFor = Exception.class)
     public UploadResultVo uploadFile(SessionWebUserDto sessionWebUserDto, String fileId, MultipartFile file, String fileName, String filePid, String fileMd5, int chunkCount, int chunkIndex) {
         UploadResultVo uploadResultVo = new UploadResultVo();
+        File tempFileFolder = null;
+        boolean isUploadSuccess = true;
         try {
             String userId = sessionWebUserDto.getUserId();
             if (StringTools.isEmpty(fileId)) {
@@ -119,17 +131,31 @@ public class FileInfoServiceImpl implements FileInfoService {
                 }
             }
             // 分块上传
-            uploadWithChunks(sessionWebUserDto, fileId, userSpaceDto, file, chunkIndex);
+            uploadWithChunks(sessionWebUserDto, fileId, userSpaceDto, file, chunkIndex, tempFileFolder);
             // 若分块索引小于分块数量减1，则返回上传中状态
             if (chunkIndex < chunkCount - 1) {
                 uploadResultVo.setStatus(UploadStatusEnum.UPLOADING.getStatus());
                 redisComponent.setTempFileSize(userId, fileId, file.getSize());
-            } else {
-                uploadResultVo.setStatus(UploadStatusEnum.UPLOAD_SUCCESS.getStatus());
+                return uploadResultVo;
             }
-            return uploadResultVo;
-        } catch (IOException e) {
+            redisComponent.setTempFileSize(userId, fileId, file.getSize());
+            // 最后一个分块上传完成后，记录数据库，异步合并文件块
+            mergeFileChunks(file, fileMd5, filePid, fileId, sessionWebUserDto, fileName, sessionWebUserDto.getUserId() + fileId);
+        } catch (BusinessException e) {
+            isUploadSuccess = false;
             logger.error("文件上传失败", e);
+            throw e;
+        } catch (Exception e) {
+            isUploadSuccess = false;
+            logger.error("文件上传失败", e);
+        } finally {
+            try {
+                if (!isUploadSuccess && (tempFileFolder != null)) {
+                    FileUtils.deleteDirectory(tempFileFolder);
+                }
+            } catch (IOException e) {
+                logger.error("删除临时文件夹失败", e);
+            }
         }
         return uploadResultVo;
     }
@@ -218,7 +244,7 @@ public class FileInfoServiceImpl implements FileInfoService {
      * @param chunkIndex        分块索引
      * @throws IOException IOException异常
      */
-    private void uploadWithChunks(SessionWebUserDto sessionWebUserDto, String fileId, UserSpaceDto userSpaceDto, MultipartFile file, int chunkIndex) throws IOException {
+    private void uploadWithChunks(SessionWebUserDto sessionWebUserDto, String fileId, UserSpaceDto userSpaceDto, MultipartFile file, int chunkIndex, File tempFileFolder) throws IOException {
         // 判断磁盘空间
         Long currentTempSize = redisComponent.getTempFileSize(sessionWebUserDto.getUserId(), fileId);
         if (currentTempSize + userSpaceDto.getUseSpace() + file.getSize() > userSpaceDto.getTotalSpace()) {
@@ -227,15 +253,174 @@ public class FileInfoServiceImpl implements FileInfoService {
         // 暂存临时文件夹
         String tempFolderName = appConfig.getProjectFolder() + Constants.FILE_FOLDER_TEMP;
         String currentFolderName = sessionWebUserDto.getUserId() + fileId;
-        File tempFolder = new File(tempFolderName + currentFolderName);
-        if (!tempFolder.exists()) {
-            boolean isCreate = tempFolder.mkdirs();
+        tempFileFolder = new File(tempFolderName + currentFolderName);
+        if (!tempFileFolder.exists()) {
+            boolean isCreate = tempFileFolder.mkdirs();
             if (!isCreate) {
                 throw new BusinessException(ResponseCodeEnum.CODE_500);
             }
         }
         // 上传文件
-        File newFile = new File(tempFolder.getPath() + "/" + chunkIndex);
+        File newFile = new File(tempFileFolder.getPath() + "/" + chunkIndex);
         file.transferTo(newFile);
+    }
+
+    /**
+     * 合并文件分块
+     *
+     * @param file              文件
+     * @param fileMd5           文件md5值
+     * @param filePid           父文件id
+     * @param fileId            文件id
+     * @param sessionWebUserDto 会话用户dto
+     * @param fileName          文件名
+     * @param folderName        文件夹名
+     */
+    private void mergeFileChunks(MultipartFile file, String fileMd5, String filePid, String fileId, SessionWebUserDto sessionWebUserDto, String fileName, String folderName) {
+        String userId = sessionWebUserDto.getUserId();
+        Date curDate = new Date();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM");
+        String month = simpleDateFormat.format(curDate);
+        String fileSuffix = StringTools.getSuffixOfFileName(fileName);
+        String realFileName = folderName + fileSuffix;
+        FileTypeEnum fileType = FileTypeEnum.getFileTypeBySuffix(fileSuffix);
+        fileName = autoRename(filePid, userId, fileName);
+        FileInfo fileInfo = new FileInfo();
+        fileInfo.setFileId(fileId);
+        fileInfo.setUserId(userId);
+        fileInfo.setFileMd5(fileMd5);
+        fileInfo.setFileName(fileName);
+        fileInfo.setFilePath(month + "/" + realFileName);
+        fileInfo.setFilePid(filePid);
+        fileInfo.setCreateTime(curDate);
+        fileInfo.setLastUpdateTime(curDate);
+        fileInfo.setFileCategory(fileType.getCategory().getCategory());
+        fileInfo.setFileType(fileType.getType());
+        fileInfo.setStatus(FileStatusEnum.TRANSFORMING.getStatus());
+        fileInfo.setFolderType(FileFolderTypeEnum.FILE.getType());
+        fileInfo.setDelFlag(FileDeleteEnum.USING.getFlag());
+        fileInfoMapper.insert(fileInfo);
+        // 更新用户使用空间
+        Long tempSize = redisComponent.getTempFileSize(userId, fileId);
+        updateUserSpace(sessionWebUserDto, tempSize);
+        // 待事务提交后转换文件
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                fileInfoService.transferFile(fileId, sessionWebUserDto);
+            }
+        });
+    }
+
+    /**
+     * 传输分块文件到目标目录
+     *
+     * @param fileId            文件id
+     * @param sessionWebUserDto 会话用户dto
+     */
+    @Override
+    @Async
+    public void transferFile(String fileId, SessionWebUserDto sessionWebUserDto) {
+        boolean isTransformSuccess = true;
+        String targetFilePath = null;
+        String cover = null;
+        FileTypeEnum fileType = null;
+        FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileId, sessionWebUserDto.getUserId());
+        try {
+            if (fileInfo == null || FileStatusEnum.TRANSFORMING.getStatus() != fileInfo.getStatus()) {
+                return;
+            }
+            // 临时文件目录名称
+            String tempFolderName = appConfig.getProjectFolder() + Constants.FILE_FOLDER_TEMP;
+            // 合并分块后的文件名称
+            String currentFolderName = sessionWebUserDto.getUserId() + fileId;
+            // 存放分块的临时文件夹
+            File tempFileFolder = new File(tempFolderName + currentFolderName);
+            // 前端传递的文件名后缀
+            String fileSuffix = StringTools.getSuffixOfFileName(fileInfo.getFileName());
+            // 存放合并后的文件目录（以日期yyyy-MM为目录名称）
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM");
+            String month = simpleDateFormat.format(fileInfo.getCreateTime());
+            // 系统文件目录
+            String targetFolderName = appConfig.getProjectFolder() + Constants.FILE_FOLDER;
+            // 分块合并目标文件
+            File targetFolder = new File(targetFolderName + "/" + month);
+            if (!targetFolder.exists()) {
+                boolean isCreate = targetFolder.mkdirs();
+                if (!isCreate) {
+                    throw new BusinessException("创建目标文件目录失败");
+                }
+            }
+            // 存放在系统的真实文件名
+            String realFileName = currentFolderName + fileSuffix;
+            // 目标文件路径
+            targetFilePath = targetFolder.getPath() + "/" + realFileName;
+            // 合并文件分块
+            merge(tempFileFolder.getPath(), targetFilePath, fileInfo.getFileName(), true);
+            // 视频文件切割
+            fileType = FileTypeEnum.getFileTypeBySuffix(fileSuffix);
+            if (FileTypeEnum.VIDEO.equals(fileType)) {
+                // 视频文件切割
+            } else if (FileTypeEnum.IMAGE.equals(fileType)) {
+                // 图片文件切割
+            }
+        } catch (Exception e) {
+            isTransformSuccess = false;
+            logger.error("文件转码失败，文件id：{}，userId：{}", fileId, sessionWebUserDto.getUserId(), e);
+        } finally {
+            FileInfo updateFileInfo = new FileInfo();
+            if (targetFilePath != null) {
+                updateFileInfo.setFileSize(new File(targetFilePath).length());
+            }
+            updateFileInfo.setFileCover(cover);
+            updateFileInfo.setStatus(isTransformSuccess ? FileStatusEnum.USING.getStatus() : FileStatusEnum.TRANSFORM_FAIL.getStatus());
+            fileInfoMapper.updateFileStatusWithOldStatus(fileId, sessionWebUserDto.getUserId(), updateFileInfo, FileStatusEnum.TRANSFORMING.getStatus());
+        }
+    }
+
+    /**
+     * 合并文件分块
+     *
+     * @param dirPath    分块文件目录路径
+     * @param toFilePath 目标文件路径
+     * @param fileName   文件名
+     * @param delSource  是否删除源文件
+     * @throws BusinessException 异常
+     */
+    private void merge(String dirPath, String toFilePath, String fileName, boolean delSource) throws BusinessException {
+        File dir = new File(dirPath);
+        if (!dir.exists()) {
+            throw new BusinessException("分块文件目录不存在");
+        }
+        File[] fileList = dir.listFiles();
+        File targetFile = new File(toFilePath);
+        try (RandomAccessFile writeFile = new RandomAccessFile(targetFile, "rw");) {
+            byte[] buffer = new byte[1024 * 10];
+            if (fileList != null) {
+                for (int i = 0; i < fileList.length; i++) {
+                    int len;
+                    File chunkFIle = new File(dirPath + "/" + i);
+                    try (RandomAccessFile readFile = new RandomAccessFile(chunkFIle, "r");) {
+                        while ((len = readFile.read(buffer)) != -1) {
+                            writeFile.write(buffer, 0, len);
+                        }
+                    } catch (IOException e) {
+                        logger.error("合并文件分块失败", e);
+                        throw new BusinessException("合并文件分块失败", e);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            logger.error("合并文件：{}失败", fileName, e);
+            throw new BusinessException("合并文件：" + fileName + "失败", e);
+        } finally {
+            if (delSource && dir.exists()) {
+                try {
+                    FileUtils.deleteDirectory(dir);
+                } catch (IOException e) {
+                    logger.error("删除分块文件目录失败", e);
+                }
+            }
+        }
     }
 }
