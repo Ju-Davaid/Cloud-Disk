@@ -25,15 +25,15 @@ public class FileInfo extends FileInfoKey {
 
     private Date lastUpdateTime;
 
-    private int folderType;
+    private Integer folderType;
 
-    private int fileCategory;
+    private Integer fileCategory;
 
-    private int fileType;
+    private Integer fileType;
 
-    private int status;
+    private Integer status;
 
     private Date recoveryTime;
 
-    private int delFlag;
+    private Integer delFlag;
 }

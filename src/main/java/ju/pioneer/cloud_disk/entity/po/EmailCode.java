@@ -11,5 +11,5 @@ import java.util.Date;
 @Data
 public class EmailCode extends EmailCodeKey {
     private Date createTime;
-    private int status;
+    private Integer status;
 }
