@@ -52,9 +52,26 @@ public class Constants {
     /**
      * 临时文件大小key
      */
-    public  static final String REDIS_TEMP_FILE_SIZE_KEY = "cloudDisk:tempFileSize:%s:%s";
+    public static final String REDIS_TEMP_FILE_SIZE_KEY = "cloudDisk:tempFileSize:%s:%s";
     /**
      * 临时文件大小过期时间，单位：分钟
      */
     public static final int REDIS_TEMP_FILE_SIZE_EXPIRE_TIME = 60;
+    /**
+     * 视频文件切割ts文件名
+     */
+    public static final String TS_NAME = "index.ts";
+    /**
+     * 视频文件切割m3u8文件名
+     */
+    public static final String M3U8_NAME = "index.m3u8";
+    /**
+     * PNG图片后缀
+     */
+    public static final String IMAGE_PNG_SUFFIX = ".png";
+
+    /**
+     * 视频封面大小
+     */
+    public static final int COVER_SIZE = 150;
 }

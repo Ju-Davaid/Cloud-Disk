@@ -57,6 +57,5 @@ public interface FileInfoService {
      * @param fileId            文件id
      * @param sessionWebUserDto 会话用户dto
      */
-    @Async
     void transferFile(String fileId, SessionWebUserDto sessionWebUserDto);
 }

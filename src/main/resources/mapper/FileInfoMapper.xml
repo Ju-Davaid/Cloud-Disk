@@ -81,12 +81,13 @@
             and file_pid in(<foreach collection="query.filePidArray" item="item" separator=",">#{item}</foreach>)
         </if>
         <if test="query.excludeFileIdArray!=null and query.excludeFileIdArray.length>0">
-            and file_id not in(<foreach collection="query.excludeFileIdArray" separator="," item="item">#{item}</foreach>)
+            and file_id not in(<foreach collection="query.excludeFileIdArray" separator="," item="item">
+            #{item}</foreach>)
         </if>
     </sql>
 
     <!-- 完整查询条件：等值+模糊+时间区间+业务标记 -->
-    <sql id="query_condition"   >
+    <sql id="query_condition">
         <where>
             <include refid="base_condition_filed"/>
             <!-- 模糊查询 -->
@@ -167,7 +168,7 @@
     </select>
 
     <!-- 单条动态插入 -->
-    <insert id="insert" parameterType="ju.pioneer.cloud_disk.entity.query.FileInfoQuery">
+    <insert id="insert" parameterType="ju.pioneer.cloud_disk.entity.po.FileInfo">
         INSERT INTO file_info
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="bean.fileId != null">file_id,</if>
@@ -310,12 +311,16 @@
 
     <!-- 按主键删除 -->
     <delete id="deleteByFileIdAndUserId">
-        DELETE FROM file_info WHERE file_id = #{fileId} AND user_id = #{userId}
+        DELETE
+        FROM file_info
+        WHERE file_id = #{fileId}
+          AND user_id = #{userId}
     </delete>
 
     <!-- 主键查询 -->
     <select id="selectByFileIdAndUserId" resultMap="base_result_map">
-        SELECT <include refid="base_column_list"/>
+        SELECT
+        <include refid="base_column_list"/>
         FROM file_info WHERE file_id=#{fileId} AND user_id=#{userId}
     </select>
 
@@ -337,8 +342,12 @@
             <include refid="common_set_clause"/>
         </set>
         WHERE user_id = #{userId}
-        <if test="filePidList!=null">AND file_pid IN(<foreach collection="filePidList" separator="," item="item">#{item}</foreach>)</if>
-        <if test="fileIdList!=null">AND file_id IN(<foreach collection="fileIdList" separator="," item="item">#{item}</foreach>)</if>
+        <if test="filePidList!=null">AND file_pid IN(<foreach collection="filePidList" separator="," item="item">
+            #{item}</foreach>)
+        </if>
+        <if test="fileIdList!=null">AND file_id IN(<foreach collection="fileIdList" separator="," item="item">
+            #{item}</foreach>)
+        </if>
         <if test="oldDelFlag!=null">AND del_flag = #{oldDelFlag}</if>
     </update>
 
@@ -346,20 +355,27 @@
     <update id="delFileBatch">
         UPDATE file_info SET del_flag = -1
         WHERE user_id = #{userId}
-        <if test="filePidList!=null">AND file_pid IN(<foreach collection="filePidList" separator="," item="item">#{item}</foreach>)</if>
-        <if test="fileIdList!=null">AND file_id IN(<foreach collection="fileIdList" separator="," item="item">#{item}</foreach>)</if>
+        <if test="filePidList!=null">AND file_pid IN(<foreach collection="filePidList" separator="," item="item">
+            #{item}</foreach>)
+        </if>
+        <if test="fileIdList!=null">AND file_id IN(<foreach collection="fileIdList" separator="," item="item">
+            #{item}</foreach>)
+        </if>
         <if test="oldDelFlag!=null">AND del_flag = #{oldDelFlag}</if>
     </update>
 
     <!-- 查询用户已使用存储空间 -->
-     <select id="selectUseSpace" resultType="java.lang.Long">
+    <select id="selectUseSpace" resultType="java.lang.Long">
         SELECT IFNULL(SUM(file_size), 0)
         FROM file_info
-        WHERE user_id = #{userId} AND del_flag != -1
+        WHERE user_id = #{userId}
+          AND del_flag != -1
     </select>
 
     <!-- 删除用户全部文件 -->
     <delete id="deleteFileByUserId">
-        DELETE FROM file_info WHERE user_id = #{userId}
+        DELETE
+        FROM file_info
+        WHERE user_id = #{userId}
     </delete>
 </mapper>
