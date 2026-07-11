@@ -5,10 +5,7 @@ import ju.pioneer.cloud_disk.entity.po.FileInfo;
 import ju.pioneer.cloud_disk.entity.query.FileInfoQuery;
 import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
 import ju.pioneer.cloud_disk.entity.vo.UploadResultVo;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 import java.util.List;
 
 public interface FileInfoService {
@@ -58,4 +55,6 @@ public interface FileInfoService {
      * @param sessionWebUserDto 会话用户dto
      */
     void transferFile(String fileId, SessionWebUserDto sessionWebUserDto);
+
+    FileInfo findFileInfoByFiledIdAndUserId(String fileId, String userId);
 }

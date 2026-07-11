@@ -16,9 +16,9 @@ import ju.pioneer.cloud_disk.exception.BusinessException;
 import ju.pioneer.cloud_disk.mapper.FileInfoMapper;
 import ju.pioneer.cloud_disk.mapper.UserInfoMapper;
 import ju.pioneer.cloud_disk.service.FileInfoService;
-import ju.pioneer.cloud_disk.utils.ProcessUtils;
 import ju.pioneer.cloud_disk.utils.ScaleFilter;
 import ju.pioneer.cloud_disk.utils.StringTools;
+import ju.pioneer.cloud_disk.utils.VideoUtils;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +73,18 @@ public class FileInfoServiceImpl implements FileInfoService {
     @Override
     public Integer findCountByParam(FileInfoQuery param) {
         return this.fileInfoMapper.selectCount(param);
+    }
+
+    /**
+     * 根据文件ID和用户ID查询文件信息
+     *
+     * @param fileId 文件 文件ID
+     * @param userId 用户ID
+     * @return 文件信息
+     */
+    @Override
+    public FileInfo findFileInfoByFiledIdAndUserId(String fileId, String userId) {
+        return fileInfoMapper.selectByFileIdAndUserId(fileId, userId);
     }
 
     /**
@@ -359,7 +371,7 @@ public class FileInfoServiceImpl implements FileInfoService {
             fileType = FileTypeEnum.getFileTypeBySuffix(fileSuffix);
             if (FileTypeEnum.VIDEO.equals(fileType)) {
                 // 视频文件切割
-                videoCut(fileId, targetFilePath);
+                VideoUtils.videoCut(fileId, targetFilePath);
                 // 生成视频封面
                 // 封面文件路径
                 cover = month + "/" + currentFolderName + Constants.IMAGE_PNG_SUFFIX;
@@ -409,13 +421,13 @@ public class FileInfoServiceImpl implements FileInfoService {
         }
         File[] fileList = dir.listFiles();
         File targetFile = new File(toFilePath);
-        try (RandomAccessFile writeFile = new RandomAccessFile(targetFile, "rw");) {
+        try (RandomAccessFile writeFile = new RandomAccessFile(targetFile, "rw")) {
             byte[] buffer = new byte[1024 * 10];
             if (fileList != null) {
                 for (int i = 0; i < fileList.length; i++) {
                     int len;
                     File chunkFIle = new File(dirPath + "/" + i);
-                    try (RandomAccessFile readFile = new RandomAccessFile(chunkFIle, "r");) {
+                    try (RandomAccessFile readFile = new RandomAccessFile(chunkFIle, "r")) {
                         while ((len = readFile.read(buffer)) != -1) {
                             writeFile.write(buffer, 0, len);
                         }
@@ -439,41 +451,4 @@ public class FileInfoServiceImpl implements FileInfoService {
         }
     }
 
-    /**
-     * 视频文件切割
-     *
-     * @param fileId         文件id
-     * @param targetFilePath 目标文件路径
-     */
-    private void videoCut(String fileId, String targetFilePath) {
-        logger.info("视频文件切割，文件id：{}，文件路径：{}", fileId, targetFilePath);
-        File sourceVideo = new File(targetFilePath);
-        if (!sourceVideo.exists() || !sourceVideo.isFile()) {
-            throw new RuntimeException("源视频文件不存在：" + targetFilePath);
-        }
-        String parentPath = sourceVideo.getParent();
-        String folderName = sourceVideo.getName().replaceAll("\\.[^.]+$", "");
-        File tsFolder = new File(parentPath, folderName);
-        if (!tsFolder.exists()) {
-            boolean mkdir = tsFolder.mkdirs();
-            if (!mkdir) {
-                throw new BusinessException("分片目录创建失败：" + tsFolder.getAbsolutePath());
-            }
-        }
-        String sep = File.separator;
-        String tsPath = tsFolder.getAbsolutePath() + sep + Constants.TS_NAME;
-        String m3u8Path = tsFolder.getAbsolutePath() + sep + Constants.M3U8_NAME;
-        String tsOutputPattern = tsFolder.getAbsolutePath() + sep + fileId + "_%4d.ts";
-        // 生成ts文件
-        String cmd1 = String.format("ffmpeg -y -i \"%s\" -vcodec copy -acodec copy -bsf:v h264_mp4toannexb -bsf:v hevc_mp4toannexb \"%s\"", targetFilePath, tsPath);
-        String cmd2 = String.format("ffmpeg -y -i \"%s\" -c copy -map 0 -f segment -segment_list \"%s\" -segment_time 30 \"%s\"", tsPath, m3u8Path, tsOutputPattern);
-        ProcessUtils.executeCommand(cmd1, true);
-        File tempTs = new File(tsPath);
-        if (!tempTs.exists()) {
-            throw new BusinessException("临时TS文件生成失败");
-        }
-        // 生成m3u8文件
-        ProcessUtils.executeCommand(cmd2, true);
-        tempTs.delete();
-    }
 }
