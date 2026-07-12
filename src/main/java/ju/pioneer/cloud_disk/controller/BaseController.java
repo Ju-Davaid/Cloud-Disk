@@ -87,7 +87,7 @@ public class BaseController {
      * @param filePath 文件路径
      */
     protected void getFileResponse(HttpServletResponse response, String filePath) {
-        if (!StringTools.isPathValid(filePath)) return;
+        if (StringTools.isPathValid(filePath)) return;
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) return;
         try (FileInputStream fileInputStream = new FileInputStream(filePath); OutputStream outputStream = response.getOutputStream()) {

@@ -93,5 +93,13 @@ public interface FileInfoService {
      * @param filePid 目标文件id
      * @param userId  用户id
      */
-    void moveFile(String[] fileIds, String filePid,String userId);
+    void moveFile(String[] fileIds, String filePid, String userId);
+
+    /**
+     * 回收文件
+     *
+     * @param userId 用户id
+     * @param fileIds 文件id列表
+     */
+    void recycleFile(String userId, String[] fileIds);
 }

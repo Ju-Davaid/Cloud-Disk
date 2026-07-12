@@ -5,7 +5,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import ju.pioneer.cloud_disk.annotation.GlobalInterceptor;
 import ju.pioneer.cloud_disk.annotation.VerifyParameter;
+import ju.pioneer.cloud_disk.component.RedisComponent;
 import ju.pioneer.cloud_disk.constants.Constants;
+import ju.pioneer.cloud_disk.entity.dto.DownloadFileDto;
 import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.enums.FileDeleteEnum;
 import ju.pioneer.cloud_disk.entity.enums.ResponseCodeEnum;
@@ -27,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileInfoController extends BaseFileController {
     @Resource
     private FileInfoService fileInfoService;
+    @Resource
+    private RedisComponent redisComponent;
 
     /**
      * 分页查询文件信息
@@ -175,6 +179,60 @@ public class FileInfoController extends BaseFileController {
         SessionWebUserDto userInfo = getUserInfoFromSession(session);
         String userId = userInfo.getUserId();
         fileInfoService.moveFile(fileIdArr, filePid, userId);
+        return getSuccessResponseVO(null);
+    }
+
+    /**
+     * 创建下载链接
+     *
+     * @param session 会话
+     * @param fileId  文件ID
+     * @return 下载链接
+     */
+    @GlobalInterceptor(checkLogin = true, checkParameters = true)
+    @GetMapping("/createDownloadUrl")
+    public ResponseVO<?> createDownloadUrl(HttpSession session, @VerifyParameter(required = true) String fileId) {
+        SessionWebUserDto userInfo = getUserInfoFromSession(session);
+        String userId = userInfo.getUserId();
+        return super.createDownloadUrl(fileId, userId);
+    }
+
+    /**
+     * 下载文件
+     *
+     * @param response 响应
+     * @param code     下载链接
+     */
+    @GetMapping("/download/{code}")
+    public void download(HttpServletResponse response, @PathVariable String code) {
+        DownloadFileDto downloadFileDto = redisComponent.getDownloadCode(code);
+        if (downloadFileDto == null) {
+            throw new BusinessException(ResponseCodeEnum.CODE_404);
+        }
+        String filePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + downloadFileDto.getFilePath();
+        String fileSuffix = StringTools.getSuffixOfFileName(downloadFileDto.getFileName());
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition", "attachment;filename=" + code + fileSuffix);
+        super.getFileResponse(response, filePath);
+    }
+
+    /**
+     * 回收文件
+     *
+     * @param session 会话
+     * @param fileIds 文件id列表
+     * @return 回收结果
+     */
+    @GlobalInterceptor(checkLogin = true)
+    @GetMapping("/delete/{fileIds}")
+    public ResponseVO<?> recycleFile(HttpSession session, @PathVariable String fileIds) {
+        SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
+        String userId = sessionWebUserDto.getUserId();
+        String[] fileIdArr = fileIds.split(",");
+        if (fileIdArr.length == 0) {
+            throw new BusinessException(ResponseCodeEnum.CODE_400);
+        }
+        fileInfoService.recycleFile(userId, fileIdArr);
         return getSuccessResponseVO(null);
     }
 }

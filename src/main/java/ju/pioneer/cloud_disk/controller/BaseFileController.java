@@ -3,8 +3,10 @@ package ju.pioneer.cloud_disk.controller;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import ju.pioneer.cloud_disk.component.RedisComponent;
 import ju.pioneer.cloud_disk.config.AppConfig;
 import ju.pioneer.cloud_disk.constants.Constants;
+import ju.pioneer.cloud_disk.entity.dto.DownloadFileDto;
 import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.enums.FileFolderTypeEnum;
 import ju.pioneer.cloud_disk.entity.enums.FileTypeEnum;
@@ -30,6 +32,8 @@ public class BaseFileController extends BaseController {
     AppConfig appConfig;
     @Resource
     private FileInfoService fileInfoService;
+    @Resource
+    private RedisComponent redisComponent;
 
     /**
      * 获取图片
@@ -114,5 +118,23 @@ public class BaseFileController extends BaseController {
         List<FileInfo> fileInfoList = fileInfoService.findListByParam(query);
         List<FileInfoVo> fileInfoVoList = CopyTools.copyList(fileInfoList, FileInfoVo.class);
         return getSuccessResponseVO(fileInfoVoList);
+    }
+
+    protected ResponseVO<?> createDownloadUrl(String fileId, String userId) {
+        FileInfo fileInfo = fileInfoService.findFileInfoByFiledIdAndUserId(fileId, userId);
+        if (fileInfo == null) {
+            throw new BusinessException(ResponseCodeEnum.CODE_400);
+        }
+        if (FileFolderTypeEnum.FOLDER.getType() == fileInfo.getFolderType()) {
+            throw new BusinessException("目录不能下载");
+        }
+        String code = StringTools.getUUID();
+        DownloadFileDto downloadFileDto = new DownloadFileDto();
+        downloadFileDto.setCode(code);
+        downloadFileDto.setFileId(fileId);
+        downloadFileDto.setFileName(fileInfo.getFilePath());
+        downloadFileDto.setFilePath(fileInfo.getFilePath());
+        redisComponent.saveDownloadCode(code, downloadFileDto);
+        return getSuccessResponseVO(code);
     }
 }

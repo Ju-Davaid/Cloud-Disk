@@ -61,7 +61,14 @@ public class Constants {
      * 临时文件大小过期时间，单位：分钟
      */
     public static final int REDIS_TEMP_FILE_SIZE_EXPIRE_TIME = 60;
-
+    /**
+     * 下载码key
+     */
+    public static final String REDIS_DOWNLOAD_CODE_KEY = "cloudDisk:downloadCode:%s";
+    /**
+     * 下载码过期时间，单位：分钟
+     */
+    public static final int REDIS_DOWNLOAD_CODE_EXPIRE_TIME = 5;
     /**
      * 视频文件切割m3u8文件名
      */

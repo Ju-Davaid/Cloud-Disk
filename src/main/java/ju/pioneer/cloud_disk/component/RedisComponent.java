@@ -2,6 +2,7 @@ package ju.pioneer.cloud_disk.component;
 
 import jakarta.annotation.Resource;
 import ju.pioneer.cloud_disk.constants.Constants;
+import ju.pioneer.cloud_disk.entity.dto.DownloadFileDto;
 import ju.pioneer.cloud_disk.entity.dto.UserSpaceDto;
 import ju.pioneer.cloud_disk.mapper.FileInfoMapper;
 import org.slf4j.Logger;
@@ -91,5 +92,25 @@ public class RedisComponent {
             return (Long) sizeObj;
         }
         return 0L;
+    }
+
+    /**
+     * 保存下载码
+     *
+     * @param code            下载码
+     * @param downloadFileDto 下载文件DTO
+     */
+    public void saveDownloadCode(String code, DownloadFileDto downloadFileDto) {
+        redisUtils.setExpireTime(String.format(Constants.REDIS_DOWNLOAD_CODE_KEY, code), downloadFileDto, Constants.REDIS_DOWNLOAD_CODE_EXPIRE_TIME);
+    }
+
+    /**
+     * 获取下载码
+     *
+     * @param code 下载码
+     * @return 下载文件DTO
+     */
+    public DownloadFileDto getDownloadCode(String code) {
+        return (DownloadFileDto) redisUtils.get(String.format(Constants.REDIS_DOWNLOAD_CODE_KEY, code));
     }
 }
