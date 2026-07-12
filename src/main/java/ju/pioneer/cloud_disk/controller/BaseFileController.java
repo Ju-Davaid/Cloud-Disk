@@ -6,16 +6,23 @@ import jakarta.servlet.http.HttpSession;
 import ju.pioneer.cloud_disk.config.AppConfig;
 import ju.pioneer.cloud_disk.constants.Constants;
 import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
+import ju.pioneer.cloud_disk.entity.enums.FileFolderTypeEnum;
 import ju.pioneer.cloud_disk.entity.enums.FileTypeEnum;
 import ju.pioneer.cloud_disk.entity.enums.ResponseCodeEnum;
 import ju.pioneer.cloud_disk.entity.po.FileInfo;
+import ju.pioneer.cloud_disk.entity.query.FileInfoQuery;
+import ju.pioneer.cloud_disk.entity.vo.FileInfoVo;
+import ju.pioneer.cloud_disk.entity.vo.ResponseVO;
 import ju.pioneer.cloud_disk.exception.BusinessException;
 import ju.pioneer.cloud_disk.service.FileInfoService;
+import ju.pioneer.cloud_disk.utils.CopyTools;
 import ju.pioneer.cloud_disk.utils.StringTools;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.List;
 
 public class BaseFileController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(BaseFileController.class);
@@ -45,6 +52,13 @@ public class BaseFileController extends BaseController {
         getFileResponse(response, filePath);
     }
 
+    /**
+     * 获取文件内容
+     *
+     * @param response 响应
+     * @param session  会话
+     * @param fileId   文件ID
+     */
     protected void getFile(HttpServletResponse response, HttpSession session, String fileId) {
         SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
         String filePath;
@@ -63,11 +77,14 @@ public class BaseFileController extends BaseController {
             if (fileInfo == null) {
                 throw new BusinessException(ResponseCodeEnum.CODE_404);
             }
+            if (fileInfo.getFolderType() == FileFolderTypeEnum.FOLDER.getType()) {
+                throw new BusinessException("目录不能预览");
+            }
             if (FileTypeEnum.VIDEO.getCategory().getCategory() == fileInfo.getFileCategory()) {
                 String fileNameNoSuffix = StringTools.getFileNameOfNoSuffix(fileInfo.getFilePath());
                 filePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + fileNameNoSuffix + "/" + Constants.M3U8_NAME;
                 response.setContentType("application/vnd.apple.mpegurl");
-            }else{
+            } else {
                 filePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + fileInfo.getFilePath();
             }
             File targetFile = new File(filePath);
@@ -77,5 +94,25 @@ public class BaseFileController extends BaseController {
         }
         logger.info("getFile filePath:{}", filePath);
         getFileResponse(response, filePath);
+    }
+
+    /**
+     * 获取目录下的文件列表
+     *
+     * @param path   � 目录路径
+     * @param userId 用户ID
+     * @return 目录下的文件列表
+     */
+    protected ResponseVO<?> getFolderInfo(String path, String userId) {
+        String[] pathArr = path.split("/");
+        FileInfoQuery query = new FileInfoQuery();
+        query.setUserId(userId);
+        query.setFolderType(FileFolderTypeEnum.FOLDER.getType());
+        query.setFileIdArray(pathArr);
+        String orderBy = "field(file_id,\"" + StringUtils.join(pathArr, "\",\"") + "\")";
+        query.setOrderBy(orderBy);
+        List<FileInfo> fileInfoList = fileInfoService.findListByParam(query);
+        List<FileInfoVo> fileInfoVoList = CopyTools.copyList(fileInfoList, FileInfoVo.class);
+        return getSuccessResponseVO(fileInfoVoList);
     }
 }

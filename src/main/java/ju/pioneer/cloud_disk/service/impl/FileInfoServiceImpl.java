@@ -10,12 +10,14 @@ import ju.pioneer.cloud_disk.entity.enums.*;
 import ju.pioneer.cloud_disk.entity.po.FileInfo;
 import ju.pioneer.cloud_disk.entity.query.FileInfoQuery;
 import ju.pioneer.cloud_disk.entity.query.SimplePage;
+import ju.pioneer.cloud_disk.entity.vo.FileInfoVo;
 import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
 import ju.pioneer.cloud_disk.entity.vo.UploadResultVo;
 import ju.pioneer.cloud_disk.exception.BusinessException;
 import ju.pioneer.cloud_disk.mapper.FileInfoMapper;
 import ju.pioneer.cloud_disk.mapper.UserInfoMapper;
 import ju.pioneer.cloud_disk.service.FileInfoService;
+import ju.pioneer.cloud_disk.utils.CopyTools;
 import ju.pioneer.cloud_disk.utils.ScaleFilter;
 import ju.pioneer.cloud_disk.utils.StringTools;
 import ju.pioneer.cloud_disk.utils.VideoUtils;
@@ -36,6 +38,8 @@ import java.io.RandomAccessFile;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class FileInfoServiceImpl implements FileInfoService {
@@ -125,6 +129,9 @@ public class FileInfoServiceImpl implements FileInfoService {
         if (StringTools.isEmpty(fileId)) {
             fileId = StringTools.getUUID();
         }
+        if (StringTools.isEmpty(filePid)) {
+            filePid = Constants.USER_ROOT_DIRECTORY_ID;
+        }
         uploadResultVo.setFileId(fileId);
         String tempFolderPath = appConfig.getProjectFolder() + Constants.FILE_FOLDER_TEMP + userId + fileId;
         File tempFileFolder = new File(tempFolderPath);
@@ -173,6 +180,81 @@ public class FileInfoServiceImpl implements FileInfoService {
     }
 
     /**
+     * 创建文件夹
+     *
+     * @param sessionWebUserDto 会话用户DTO
+     * @param filePid           父级ID
+     * @param fileName          文件夹名
+     * @return 文件夹信息
+     */
+    @Override
+    public FileInfoVo createFolder(SessionWebUserDto sessionWebUserDto, String filePid, String fileName) {
+        String userId = sessionWebUserDto.getUserId();
+        Date date = new Date();
+        String fileId = StringTools.getUUID();
+        fileName = autoRename(filePid, fileId, userId, fileName);
+        FileInfo fileInfo = new FileInfo();
+        fileInfo.setFileId(fileId);
+        fileInfo.setFilePid(filePid);
+        fileInfo.setUserId(userId);
+        fileInfo.setFileName(fileName);
+        fileInfo.setFolderType(FileFolderTypeEnum.FOLDER.getType());
+        fileInfo.setStatus(FileStatusEnum.USING.getStatus());
+        fileInfo.setDelFlag(FileDeleteEnum.USING.getFlag());
+        fileInfo.setCreateTime(date);
+        fileInfo.setLastUpdateTime(date);
+        fileInfoMapper.insert(fileInfo);
+        return CopyTools.copy(fileInfo, FileInfoVo.class);
+    }
+
+    /**
+     * 重命名文件
+     *
+     * @param userId   用户ID
+     * @param fileId   文件ID
+     * @param fileName 文件名
+     * @return 重命名后的文件VO
+     */
+    @Override
+    public FileInfoVo renameFile(String userId, String fileId, String fileName) {
+        FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileId, userId);
+        if (fileInfo == null) {
+            throw new BusinessException("文件不存在或已被删除");
+        }
+        fileName = autoRename(fileInfo.getFilePid(), fileId, userId, fileName);
+        fileInfo.setFileName(fileName);
+        fileInfo.setLastUpdateTime(new Date());
+        fileInfoMapper.updateByFileIdAndUserId(fileInfo, fileId, userId);
+        return CopyTools.copy(fileInfo, FileInfoVo.class);
+    }
+
+    /**
+     * 移动文件到目标目录
+     *
+     * @param fileIds 文件id列表，逗号分隔
+     * @param filePid 目标文件id
+     */
+    @Override
+    public void moveFile(String[] fileIds, String filePid, String userId) {
+        if (!Constants.USER_ROOT_DIRECTORY_ID.equals(filePid)) {
+            FileInfo fileInfo = this.findFileInfoByFiledIdAndUserId(filePid, userId);
+            if (fileInfo == null || FileDeleteEnum.USING.getFlag() != fileInfo.getDelFlag()) {
+                throw new BusinessException(ResponseCodeEnum.CODE_600);
+            }
+        }
+        FileInfoQuery query = new FileInfoQuery();
+        query.setUserId(userId);
+        query.setFileIdArray(fileIds);
+        // 需要移动的文件信息列表
+        List<FileInfo> movedFileInfo = this.findListByParam(query);
+        movedFileInfo = movedFileInfo.stream().peek(item -> {
+            item.setFileName(autoRename(filePid, item.getFileId(), userId, item.getFileName()));
+            item.setFilePid(filePid);
+        }).toList();
+        fileInfoMapper.insertOrUpdateBatch(movedFileInfo);
+    }
+
+    /**
      * 自动重命名文件
      *
      * @param filePid  父级ID
@@ -180,17 +262,15 @@ public class FileInfoServiceImpl implements FileInfoService {
      * @param fileName 文件名
      * @return 重命名后的文件名
      */
-    private String autoRename(String filePid, String userId, String fileName) {
+    private String autoRename(String filePid, String fileId, String userId, String fileName) {
         FileInfoQuery query = new FileInfoQuery();
         query.setFilePid(filePid);
         query.setUserId(userId);
         query.setDelFlag(FileDeleteEnum.USING.getFlag());
-        query.setFileName(fileName);
-        query.setSimplePage(new SimplePage(0, 1));
+        query.setExcludeFileIdArray(new String[]{fileId});
         List<FileInfo> fileInfoListFromDB = fileInfoMapper.selectList(query);
-        if (!fileInfoListFromDB.isEmpty()) {
-            fileName = StringTools.rename(fileName);
-        }
+        Set<String> existNames = fileInfoListFromDB.stream().map(FileInfo::getFileName).collect(Collectors.toSet());
+        fileName = StringTools.getSafeFileName(fileName, existNames);
         return fileName;
     }
 
@@ -238,7 +318,7 @@ public class FileInfoServiceImpl implements FileInfoService {
         fileFromDB.setDelFlag(FileDeleteEnum.USING.getFlag());
         fileFromDB.setFileMd5(fileMd5);
         // 文件重命名
-        fileName = autoRename(filePid, userId, fileName);
+        fileName = autoRename(filePid, fileId, userId, fileName);
         fileFromDB.setFileName(fileName);
         // 插入文件信息
         fileInfoMapper.insert(fileFromDB);
@@ -293,7 +373,7 @@ public class FileInfoServiceImpl implements FileInfoService {
         String realFileName = userId + fileId + fileSuffix;
         // 获取当前文件类型
         FileTypeEnum fileType = FileTypeEnum.getFileTypeBySuffix(fileSuffix);
-        fileName = autoRename(filePid, userId, fileName);
+        fileName = autoRename(filePid, fileId, userId, fileName);
         FileInfo fileInfo = new FileInfo();
         fileInfo.setFileId(fileId);
         fileInfo.setUserId(userId);

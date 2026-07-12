@@ -3,9 +3,13 @@ package ju.pioneer.cloud_disk.utils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StringTools {
+
     private static final BCryptPasswordEncoder ENCODER = new BCryptPasswordEncoder();
 
     /**
@@ -68,22 +72,46 @@ public class StringTools {
      */
     public static boolean isPathValid(String path) {
         if (isEmpty(path)) {
-            return false;
+            return true;
         }
-        return !path.contains("../") && !path.contains("..\\");
+        return path.contains("../") || path.contains("..\\");
     }
 
     /**
-     * 重命名文件名
+     * 获取安全的文件名
      *
-     * @param fileName 文件名
-     * @return 重命名后的文件名
+     * @param originalName 原始文件名
+     * @param existNames   已存在的文件名集合
+     * @return 安全的文件名
      */
-    public static String rename(String fileName) {
-        String fileNameNoSuffix = getFileNameOfNoSuffix(fileName);
-        String suffix = getSuffixOfFileName(fileName);
-        return fileNameNoSuffix + "_" + getRandomNumber(4) + suffix;
+    public static String getSafeFileName(String originalName, Set<String> existNames) {
+        if (!existNames.contains(originalName)) {
+            return originalName;
+        }
+        final Pattern FILE_PATTERN = Pattern.compile("^(.*?)(\\s*\\((\\d+)\\))?(\\.[^.]+)?$");
+        Matcher matcher = FILE_PATTERN.matcher(originalName);
+        String baseName;
+        String suffix;
+        int num = 1;
+        if (matcher.matches()) {
+            baseName = matcher.group(1);
+            String numStr = matcher.group(3);
+            suffix = matcher.group(4) == null ? "" : matcher.group(4);
+            if (numStr != null) {
+                num = Integer.parseInt(numStr);
+            }
+        } else {
+            baseName = originalName;
+            suffix = "";
+        }
+        String newName;
+        do {
+            num++;
+            newName = baseName + " (" + num + ")" + suffix;
+        } while (existNames.contains(newName));
+        return newName;
     }
+
 
     /**
      * 获取文件后缀名 (.xxx)

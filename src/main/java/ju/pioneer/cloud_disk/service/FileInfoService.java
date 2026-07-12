@@ -3,9 +3,11 @@ package ju.pioneer.cloud_disk.service;
 import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.po.FileInfo;
 import ju.pioneer.cloud_disk.entity.query.FileInfoQuery;
+import ju.pioneer.cloud_disk.entity.vo.FileInfoVo;
 import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
 import ju.pioneer.cloud_disk.entity.vo.UploadResultVo;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 public interface FileInfoService {
@@ -56,5 +58,40 @@ public interface FileInfoService {
      */
     void transferFile(String fileId, SessionWebUserDto sessionWebUserDto);
 
+    /**
+     * 根据文件id和用户id查询文件信息
+     *
+     * @param fileId 文件id
+     * @param userId 用户id
+     * @return 文件信息
+     */
     FileInfo findFileInfoByFiledIdAndUserId(String fileId, String userId);
+
+    /**
+     * 创建文件夹
+     *
+     * @param sessionWebUserDto 会话用户dto
+     * @param filePid           父文件id
+     * @param fileName          文件夹名
+     */
+    FileInfoVo createFolder(SessionWebUserDto sessionWebUserDto, String filePid, String fileName);
+
+    /**
+     * 重命名文件
+     *
+     * @param userId   用户id
+     * @param fileId   文件id
+     * @param fileName 文件名
+     * @return 重命名后的文件信息vo
+     */
+    FileInfoVo renameFile(String userId, String fileId, String fileName);
+
+    /**
+     * 移动文件到目标目录
+     *
+     * @param fileIds 文件id列表
+     * @param filePid 目标文件id
+     * @param userId  用户id
+     */
+    void moveFile(String[] fileIds, String filePid,String userId);
 }

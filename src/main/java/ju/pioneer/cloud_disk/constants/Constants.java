@@ -2,6 +2,10 @@ package ju.pioneer.cloud_disk.constants;
 
 public class Constants {
     /**
+     * 用户根目录ID
+     */
+    public static final String USER_ROOT_DIRECTORY_ID = "root";
+    /**
      * 邮箱验证码长度
      */
     public static final int LENGTH_EMAIL_CODE = 5;
@@ -57,10 +61,7 @@ public class Constants {
      * 临时文件大小过期时间，单位：分钟
      */
     public static final int REDIS_TEMP_FILE_SIZE_EXPIRE_TIME = 60;
-    /**
-     * 视频文件切割ts文件名
-     */
-    public static final String TS_NAME = "index.ts";
+
     /**
      * 视频文件切割m3u8文件名
      */
