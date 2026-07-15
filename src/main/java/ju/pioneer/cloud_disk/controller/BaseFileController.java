@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 public class BaseFileController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(BaseFileController.class);
@@ -125,7 +126,7 @@ public class BaseFileController extends BaseController {
         if (fileInfo == null) {
             throw new BusinessException(ResponseCodeEnum.CODE_400);
         }
-        if (FileFolderTypeEnum.FOLDER.getType() == fileInfo.getFolderType()) {
+        if (Objects.equals(FileFolderTypeEnum.FOLDER.getType(), fileInfo.getFolderType())) {
             throw new BusinessException("目录不能下载");
         }
         String code = StringTools.getUUID();

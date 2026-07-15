@@ -11,7 +11,6 @@ import ju.pioneer.cloud_disk.entity.dto.DownloadFileDto;
 import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.enums.FileDeleteEnum;
 import ju.pioneer.cloud_disk.entity.enums.ResponseCodeEnum;
-import ju.pioneer.cloud_disk.entity.po.FileInfo;
 import ju.pioneer.cloud_disk.entity.query.FileInfoQuery;
 import ju.pioneer.cloud_disk.entity.vo.FileInfoVo;
 import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
@@ -38,9 +37,9 @@ public class FileInfoController extends BaseFileController {
      * @param query 查询参数
      * @return 分页结果Vo<FileInfo>
      */
-    @GlobalInterceptor(checkLogin = true, checkParameters = true)
+    @GlobalInterceptor(checkLogin = true)
     @PostMapping("/list")
-    public ResponseVO<?> getFileList(HttpSession session, @RequestBody(required = false) FileInfoQuery query) {
+    public ResponseVO<PaginateResultVo<FileInfoVo>> getFileList(HttpSession session, @RequestBody(required = false) FileInfoQuery query) {
         SessionWebUserDto userInfo = getUserInfoFromSession(session);
         if (query == null) {
             query = new FileInfoQuery();
@@ -51,8 +50,8 @@ public class FileInfoController extends BaseFileController {
         query.setUserId(userInfo.getUserId());
         query.setOrderBy("last_update_time desc");
         query.setDelFlag(FileDeleteEnum.USING.getFlag());
-        PaginateResultVo<FileInfo> resultVo = fileInfoService.findListByPage(query);
-        return getSuccessResponseVO(convertPaginateResultVo(resultVo, FileInfoVo.class));
+        PaginateResultVo<FileInfoVo> resultVo = fileInfoService.findListByPage(query);
+        return getSuccessResponseVO(resultVo);
     }
 
 
@@ -210,9 +209,8 @@ public class FileInfoController extends BaseFileController {
             throw new BusinessException(ResponseCodeEnum.CODE_404);
         }
         String filePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + downloadFileDto.getFilePath();
-        String fileSuffix = StringTools.getSuffixOfFileName(downloadFileDto.getFileName());
         response.setContentType("application/octet-stream");
-        response.setHeader("Content-Disposition", "attachment;filename=" + code + fileSuffix);
+        response.setHeader("Content-Disposition", "attachment;filename=" + downloadFileDto.getFileName());
         super.getFileResponse(response, filePath);
     }
 
@@ -224,7 +222,7 @@ public class FileInfoController extends BaseFileController {
      * @return 回收结果
      */
     @GlobalInterceptor(checkLogin = true)
-    @GetMapping("/delete/{fileIds}")
+    @GetMapping("/remove/{fileIds}")
     public ResponseVO<?> recycleFile(HttpSession session, @PathVariable String fileIds) {
         SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
         String userId = sessionWebUserDto.getUserId();
@@ -233,6 +231,12 @@ public class FileInfoController extends BaseFileController {
             throw new BusinessException(ResponseCodeEnum.CODE_400);
         }
         fileInfoService.recycleFile(userId, fileIdArr);
+        return getSuccessResponseVO(null);
+    }
+    @GlobalInterceptor(checkLogin = true)
+    @GetMapping("/delete/{fileIds}")
+    public ResponseVO<?> deleteFile(HttpSession session,@PathVariable String fileIds){
+
         return getSuccessResponseVO(null);
     }
 }

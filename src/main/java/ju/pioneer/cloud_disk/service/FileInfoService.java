@@ -15,9 +15,9 @@ public interface FileInfoService {
      * 分页查询文件信息
      *
      * @param param 查询参数
-     * @return 分页结果Vo<FileInfo>
+     * @return 分页结果Vo<FileInfoVo>
      */
-    PaginateResultVo<FileInfo> findListByPage(FileInfoQuery param);
+    PaginateResultVo<FileInfoVo> findListByPage(FileInfoQuery param);
 
     /**
      * 根据参数查询文件信息列表
@@ -98,8 +98,25 @@ public interface FileInfoService {
     /**
      * 回收文件
      *
-     * @param userId 用户id
+     * @param userId  用户id
      * @param fileIds 文件id列表
      */
     void recycleFile(String userId, String[] fileIds);
+
+    /**
+     * 恢复文件
+     *
+     * @param userId  用户id
+     * @param fileIds 文件id列表
+     */
+    void recoverFile(String userId, String[] fileIds);
+
+    /**
+     * 删除文件
+     *
+     * @param userId  用户id
+     * @param fileIds 文件id列表
+     * @param isAdmin 是否为管理员
+     */
+    void deleteFile(String userId, String[] fileIds, boolean isAdmin);
 }

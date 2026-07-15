@@ -351,14 +351,15 @@
         <if test="oldDelFlag!=null">AND del_flag = #{oldDelFlag}</if>
     </update>
 
-    <!-- 批量逻辑删除，统一del_flag状态（建议规范：-1彻底删除，0回收站，2正常） -->
+    <!-- 批量逻辑删除，统一del_flag状态（建议规范：-1 彻底删除，0回收站，2正常） -->
     <update id="delFileBatch">
         UPDATE file_info SET del_flag = -1
         WHERE user_id = #{userId}
         <if test="filePidList!=null">AND file_pid IN(<foreach collection="filePidList" separator="," item="item">
             #{item}</foreach>)
         </if>
-        <if test="fileIdList!=null">AND file_id IN(<foreach collection="fileIdList" separator="," item="item">
+        <if test="fileIdList!=null">
+            AND file_id IN(<foreach collection="fileIdList" separator="," item="item">
             #{item}</foreach>)
         </if>
         <if test="oldDelFlag!=null">AND del_flag = #{oldDelFlag}</if>
@@ -378,4 +379,63 @@
         FROM file_info
         WHERE user_id = #{userId}
     </delete>
+    <!-- 查询用户回收站所有子孙文件信息 -->
+    <select id="selectAllChildFileInfo" resultMap="base_result_map">
+        WITH RECURSIVE file_tree AS (
+        SELECT
+        t.file_id,
+        t.file_pid,
+        t.file_name,
+        t.folder_type
+        FROM file_info t
+        <where>
+            <if test="query.userId != null">
+                t.user_id = #{query.userId}
+            </if>
+            <if test="query.parentDelFlag != null">
+                AND t.del_flag = #{query.delFlag, jdbcType=INTEGER}
+            </if>
+            <if test="query.parentFileIdArray != null and query.parentFileIdArray.length > 0">
+                AND t.file_id IN
+                <foreach collection="query.parentFileIdArray" open="(" separator="," close=")" item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+
+        UNION ALL
+
+        SELECT
+        child.file_id,
+        child.file_pid,
+        child.file_name,
+        child.folder_type
+        FROM file_info child
+        INNER JOIN file_tree root ON child.file_pid = root.file_id
+        <where>
+            <if test="query.userId != null">
+                child.user_id = #{query.userId}
+            </if>
+            <if test="query.childDelFlag != null">
+                AND child.del_flag = #{query.childDelFlag, jdbcType=INTEGER}
+            </if>
+        </where>
+        )
+        SELECT *
+        FROM file_tree
+        <where>
+            <if test="query.resultFolderType != null">
+                file_tree.folder_type = #{query.resultFolderType, jdbcType=INTEGER}
+            </if>
+            <if test="!query.isIncludeParent and query.parentFileIdArray != null and query.parentFileIdArray.length > 0">
+                AND file_tree.file_id NOT IN
+                <foreach collection="query.parentFileIdArray" open="(" separator="," close=")" item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        <if test="query.orderBy != null and query.orderBy != ''">
+            ORDER BY ${query.orderBy}
+        </if>
+    </select>
 </mapper>

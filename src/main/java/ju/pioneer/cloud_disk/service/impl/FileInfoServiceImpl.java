@@ -8,7 +8,9 @@ import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.dto.UserSpaceDto;
 import ju.pioneer.cloud_disk.entity.enums.*;
 import ju.pioneer.cloud_disk.entity.po.FileInfo;
+import ju.pioneer.cloud_disk.entity.po.UserInfo;
 import ju.pioneer.cloud_disk.entity.query.FileInfoQuery;
+import ju.pioneer.cloud_disk.entity.query.RecursiveFileInfoQuery;
 import ju.pioneer.cloud_disk.entity.query.SimplePage;
 import ju.pioneer.cloud_disk.entity.vo.FileInfoVo;
 import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
@@ -36,10 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -99,14 +98,15 @@ public class FileInfoServiceImpl implements FileInfoService {
      * @return 分页结果Vo<FileInfo>
      */
     @Override
-    public PaginateResultVo<FileInfo> findListByPage(FileInfoQuery param) {
+    public PaginateResultVo<FileInfoVo> findListByPage(FileInfoQuery param) {
         int count = this.findCountByParam(param);
         int pageSize = param.getPageSize() == null ? PageSizeEnum.SIZE15.getSize() : param.getPageSize();
         SimplePage page = new SimplePage(param.getPageNo(), count, pageSize);
         param.setSimplePage(page);
         logger.info("分页查询文件信息，参数：{}，分页信息：{}", param, page);
         List<FileInfo> list = this.findListByParam(param);
-        return new PaginateResultVo<>(count, page.getPageSize(), page.getPageNo(), page.getPageTotal(), list);
+        List<FileInfoVo> fileInfoVoList = CopyTools.copyList(list, FileInfoVo.class);
+        return new PaginateResultVo<>(count, page.getPageSize(), page.getPageNo(), page.getPageTotal(), fileInfoVoList);
     }
 
     /**
@@ -261,6 +261,7 @@ public class FileInfoServiceImpl implements FileInfoService {
      * @param userId  用户id
      * @param fileIds 文件id列表
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void recycleFile(String userId, String[] fileIds) {
         FileInfoQuery query = new FileInfoQuery();
@@ -271,51 +272,128 @@ public class FileInfoServiceImpl implements FileInfoService {
         if (fileInfoList.isEmpty()) {
             throw new BusinessException("文件不存在或已被删除");
         }
-        // 过滤出文件id列表
-        List<String> fileIdList = fileInfoList.stream().filter(info -> info.getFolderType() == FileFolderTypeEnum.FILE.getType()).map(FileInfo::getFileId).toList();
-        // 过滤出文件夹id列表
-        List<String> folderIdList = fileInfoList.stream().filter(info -> info.getFolderType() == FileFolderTypeEnum.FOLDER.getType()).map(FileInfo::getFileId).toList();
-        List<String> deleteFileIdList = new ArrayList<>(fileIdList);
-        for (String fileId : folderIdList) {
-            findAllChildFile(deleteFileIdList, userId, fileId, FileDeleteEnum.USING);
-        }
-        logger.info("回收文件id列表:{}", deleteFileIdList);
-        if (!deleteFileIdList.isEmpty()) {
+        String[] folderIds = fileInfoList.stream().filter(item -> Objects.equals(item.getFolderType(), FileFolderTypeEnum.FOLDER.getType())).map(FileInfo::getFileId).toArray(String[]::new);
+        RecursiveFileInfoQuery recursiveFileInfoQuery = new RecursiveFileInfoQuery();
+        recursiveFileInfoQuery.setUserId(userId);
+        recursiveFileInfoQuery.setResultFolderType(FileFolderTypeEnum.FOLDER.getType());
+        recursiveFileInfoQuery.setParentFileIdArray(folderIds);
+        recursiveFileInfoQuery.setChildDelFlag(FileDeleteEnum.USING.getFlag());
+        recursiveFileInfoQuery.setIsIncludeParent(true);
+        // 所选文件的子文件夹列表
+        List<FileInfo> recoverChildFolderList = fileInfoMapper.selectAllChildFileInfo(recursiveFileInfoQuery);
+        // 所选文件的子文件夹id列表
+        List<String> recoverFilePidList = recoverChildFolderList.stream().map(FileInfo::getFileId).toList();
+        if (!recoverFilePidList.isEmpty()) {
             FileInfo updateInfo = new FileInfo();
-            updateInfo.setDelFlag(FileDeleteEnum.RECYCLE.getFlag());
+            updateInfo.setDelFlag(FileDeleteEnum.DEL.getFlag());
             updateInfo.setRecoveryTime(new Date());
-            fileInfoMapper.updateFileDelFlagBatch(updateInfo, userId, null, deleteFileIdList, FileDeleteEnum.USING.getFlag());
+            fileInfoMapper.updateFileDelFlagBatch(updateInfo, userId, recoverFilePidList, null, FileDeleteEnum.USING.getFlag());
+        }
+        List<String> recycleFileIdList = Arrays.asList(fileIds);
+        FileInfo fileInfo = new FileInfo();
+        fileInfo.setRecoveryTime(new Date());
+        fileInfo.setDelFlag(FileDeleteEnum.RECYCLE.getFlag());
+        fileInfoMapper.updateFileDelFlagBatch(fileInfo, userId, null, recycleFileIdList, FileDeleteEnum.USING.getFlag());
+    }
+
+    /**
+     * 恢复文件
+     *
+     * @param userId  用户id
+     * @param fileIds 文件id列表
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void recoverFile(String userId, String[] fileIds) {
+        FileInfoQuery query = new FileInfoQuery();
+        query.setUserId(userId);
+        query.setFileIdArray(fileIds);
+        query.setDelFlag(FileDeleteEnum.RECYCLE.getFlag());
+        List<FileInfo> fileInfoList = this.findListByParam(query);
+        if (fileInfoList.isEmpty()) {
+            throw new BusinessException("文件不存在或已被删除");
+        }
+        String[] folderIds = fileInfoList.stream().filter(item -> Objects.equals(item.getFolderType(), FileFolderTypeEnum.FOLDER.getType())).map(FileInfo::getFileId).toArray(String[]::new);
+        RecursiveFileInfoQuery recursiveFileInfoQuery = new RecursiveFileInfoQuery();
+        recursiveFileInfoQuery.setUserId(userId);
+        recursiveFileInfoQuery.setResultFolderType(FileFolderTypeEnum.FOLDER.getType());
+        recursiveFileInfoQuery.setParentFileIdArray(folderIds);
+        recursiveFileInfoQuery.setChildDelFlag(FileDeleteEnum.DEL.getFlag());
+        recursiveFileInfoQuery.setIsIncludeParent(true);
+        // 所选文件的子文件夹列表
+        List<FileInfo> recoverChildFolderList = fileInfoMapper.selectAllChildFileInfo(recursiveFileInfoQuery);
+        // 所选文件的子文件夹id列表
+        List<String> recoverFilePidList = recoverChildFolderList.stream().map(FileInfo::getFileId).toList();
+        logger.info("recoverChildFolderList:{}", recoverFilePidList);
+        if (!recoverFilePidList.isEmpty()) {
+            FileInfo updateInfo = new FileInfo();
+            updateInfo.setDelFlag(FileDeleteEnum.USING.getFlag());
+            updateInfo.setLastUpdateTime(new Date());
+            fileInfoMapper.updateFileDelFlagBatch(updateInfo, userId, recoverFilePidList, null, FileDeleteEnum.DEL.getFlag());
+        }
+        // 更新所选文件的子文件夹的文件名
+        List<FileInfo> updateFileInfoList = fileInfoList.stream().peek(item -> {
+            item.setFileName(autoRename(item.getFilePid(), item.getFileId(), userId, item.getFileName()));
+            item.setDelFlag(FileDeleteEnum.USING.getFlag());
+            item.setLastUpdateTime(new Date());
+        }).toList();
+        for (FileInfo updateFileInfo : updateFileInfoList) {
+            fileInfoMapper.updateByFileIdAndUserId(updateFileInfo, updateFileInfo.getFileId(), userId);
         }
     }
 
     /**
-     * 递归查询所有子文件id
+     * 删除文件
      *
-     * @param childFileIdList 子文件id列表
-     * @param userId          用户id
-     * @param filePid         父文件id
-     * @param fileDeleteEnum  文件删除状态枚举
+     * @param userId  用户id
+     * @param fileIds 文件id列表
+     * @param isAdmin 是否是管理员
      */
-    private void findAllChildFile(List<String> childFileIdList, String userId, String filePid, FileDeleteEnum fileDeleteEnum) {
-        childFileIdList.add(filePid);
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void deleteFile(String userId, String[] fileIds, boolean isAdmin) {
         FileInfoQuery query = new FileInfoQuery();
-        query.setFilePid(filePid);
         query.setUserId(userId);
-        query.setDelFlag(fileDeleteEnum.getFlag());
-        List<FileInfo> childFileInfoList = fileInfoMapper.selectList(query);
-        for (FileInfo childFileInfo : childFileInfoList) {
-            if (childFileInfo.getFolderType() == FileFolderTypeEnum.FILE.getType()) {
-                childFileIdList.add(childFileInfo.getFileId());
-            } else {
-                findAllChildFile(childFileIdList, userId, childFileInfo.getFileId(), fileDeleteEnum);
-            }
+        query.setFileIdArray(fileIds);
+        query.setDelFlag(FileDeleteEnum.RECYCLE.getFlag());
+        List<FileInfo> fileInfoList = this.findListByParam(query);
+        if (fileInfoList.isEmpty()) {
+            throw new BusinessException("文件不存在或已被删除");
         }
+        RecursiveFileInfoQuery recursiveFileInfoQuery = new RecursiveFileInfoQuery();
+        recursiveFileInfoQuery.setUserId(userId);
+        recursiveFileInfoQuery.setResultFolderType(FileFolderTypeEnum.FOLDER.getType());
+        recursiveFileInfoQuery.setParentFileIdArray(fileIds);
+        recursiveFileInfoQuery.setChildDelFlag(FileDeleteEnum.DEL.getFlag());
+        recursiveFileInfoQuery.setIsIncludeParent(true);
+        // 子文件夹
+        List<FileInfo> deleteChildFolderList = fileInfoMapper.selectAllChildFileInfo(recursiveFileInfoQuery);
+        List<String> deleteFilePidList = deleteChildFolderList.stream().map(FileInfo::getFileId).toList();
+        logger.info("deleteChildFolderList:{}", deleteFilePidList);
+        if (!deleteFilePidList.isEmpty()) {
+            fileInfoMapper.delFileBatch(userId, deleteFilePidList, null, isAdmin ? null : FileDeleteEnum.DEL.getFlag());
+        }
+        // 删除所选文件
+        fileInfoMapper.delFileBatch(userId, null, Arrays.asList(fileIds), isAdmin ? null : FileDeleteEnum.RECYCLE.getFlag());
+        long useSpace = fileInfoMapper.selectUseSpace(userId);
+        // 更新用户使用空间
+        UserInfo updateUserInfo = new UserInfo();
+        updateUserInfo.setUserId(userId);
+        updateUserInfo.setUseSpace(useSpace);
+        userInfoMapper.updateByPrimaryKeySelective(updateUserInfo);
+        UserSpaceDto oldUserSpaceDto = redisComponent.getUserSpaceUse(userId);
+        // 更新用户空间缓存
+        UserSpaceDto userSpaceDto = new UserSpaceDto();
+        userSpaceDto.setUseSpace(useSpace);
+        userSpaceDto.setTotalSpace(oldUserSpaceDto.getTotalSpace());
+        redisComponent.saveUserSpaceUse(userId, userSpaceDto);
     }
 
     /**
      * 自动重命名文件
      *
      * @param filePid  父级ID
+     * @param fileId   文件ID
      * @param userId   用户ID
      * @param fileName 文件名
      * @return 重命名后的文件名
