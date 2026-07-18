@@ -101,7 +101,8 @@ public class FileInfoController extends BaseFileController {
     @GlobalInterceptor(checkLogin = true)
     @GetMapping("/video/stream/{fileId}")
     public void playVideo(HttpServletResponse response, HttpSession session, @PathVariable String fileId) {
-        super.getFile(response, session, fileId);
+        String userId = getUserInfoFromSession(session).getUserId();
+        super.getFile(response, userId, fileId);
     }
 
     /**
@@ -114,7 +115,8 @@ public class FileInfoController extends BaseFileController {
     @GlobalInterceptor(checkLogin = true)
     @GetMapping("/doc/{fileId}")
     public void getDoc(HttpServletResponse response, HttpSession session, @PathVariable String fileId) {
-        super.getFile(response, session, fileId);
+        String userId = getUserInfoFromSession(session).getUserId();
+        super.getFile(response, userId, fileId);
     }
 
     /**
@@ -233,10 +235,17 @@ public class FileInfoController extends BaseFileController {
         fileInfoService.recycleFile(userId, fileIdArr);
         return getSuccessResponseVO(null);
     }
+
     @GlobalInterceptor(checkLogin = true)
     @GetMapping("/delete/{fileIds}")
-    public ResponseVO<?> deleteFile(HttpSession session,@PathVariable String fileIds){
-
+    public ResponseVO<?> deleteFile(HttpSession session, @PathVariable String fileIds) {
+        SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
+        String userId = sessionWebUserDto.getUserId();
+        String[] fileIdArr = fileIds.split(",");
+        if (fileIdArr.length == 0) {
+            throw new BusinessException(ResponseCodeEnum.CODE_400);
+        }
+        fileInfoService.deleteFile(userId, fileIdArr, sessionWebUserDto.isAdmin());
         return getSuccessResponseVO(null);
     }
 }

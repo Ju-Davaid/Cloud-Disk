@@ -63,7 +63,7 @@ public class FileInfoServiceImpl implements FileInfoService {
      * @param param 查询参数
      * @return 文件信息列表
      */
-    @Override
+//    @Override
     public List<FileInfo> findListByParam(FileInfoQuery param) {
         return this.fileInfoMapper.selectList(param);
     }
@@ -103,8 +103,8 @@ public class FileInfoServiceImpl implements FileInfoService {
         int pageSize = param.getPageSize() == null ? PageSizeEnum.SIZE15.getSize() : param.getPageSize();
         SimplePage page = new SimplePage(param.getPageNo(), count, pageSize);
         param.setSimplePage(page);
-        logger.info("分页查询文件信息，参数：{}，分页信息：{}", param, page);
         List<FileInfo> list = this.findListByParam(param);
+        logger.info("分页查询文件信息，参数：{}，分页信息：{}，查询结果：{}", param, page, list);
         List<FileInfoVo> fileInfoVoList = CopyTools.copyList(list, FileInfoVo.class);
         return new PaginateResultVo<>(count, page.getPageSize(), page.getPageNo(), page.getPageTotal(), fileInfoVoList);
     }
@@ -196,6 +196,9 @@ public class FileInfoServiceImpl implements FileInfoService {
         fileName = autoRename(filePid, fileId, userId, fileName);
         FileInfo fileInfo = new FileInfo();
         fileInfo.setFileId(fileId);
+        if (StringTools.isEmpty(filePid)) {
+            filePid = Constants.USER_ROOT_DIRECTORY_ID;
+        }
         fileInfo.setFilePid(filePid);
         fileInfo.setUserId(userId);
         fileInfo.setFileName(fileName);
@@ -355,7 +358,7 @@ public class FileInfoServiceImpl implements FileInfoService {
         FileInfoQuery query = new FileInfoQuery();
         query.setUserId(userId);
         query.setFileIdArray(fileIds);
-        query.setDelFlag(FileDeleteEnum.RECYCLE.getFlag());
+        query.setDelFlag(isAdmin ? null : FileDeleteEnum.RECYCLE.getFlag());
         List<FileInfo> fileInfoList = this.findListByParam(query);
         if (fileInfoList.isEmpty()) {
             throw new BusinessException("文件不存在或已被删除");

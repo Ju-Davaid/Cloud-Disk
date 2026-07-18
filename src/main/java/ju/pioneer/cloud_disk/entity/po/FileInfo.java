@@ -36,4 +36,6 @@ public class FileInfo extends FileInfoKey {
     private Date recoveryTime;
 
     private Integer delFlag;
+
+    private String nickName;
 }

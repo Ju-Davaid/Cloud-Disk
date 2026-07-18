@@ -6,13 +6,20 @@ import ju.pioneer.cloud_disk.config.AppConfig;
 import ju.pioneer.cloud_disk.constants.Constants;
 import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.dto.UserSpaceDto;
+import ju.pioneer.cloud_disk.entity.enums.PageSizeEnum;
 import ju.pioneer.cloud_disk.entity.enums.UserStatuseEnum;
+import ju.pioneer.cloud_disk.entity.po.FileInfo;
 import ju.pioneer.cloud_disk.entity.po.UserInfo;
+import ju.pioneer.cloud_disk.entity.query.SimplePage;
+import ju.pioneer.cloud_disk.entity.query.UserInfoQuery;
+import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
+import ju.pioneer.cloud_disk.entity.vo.UserInfoVo;
 import ju.pioneer.cloud_disk.exception.BusinessException;
 import ju.pioneer.cloud_disk.mapper.FileInfoMapper;
 import ju.pioneer.cloud_disk.mapper.UserInfoMapper;
 import ju.pioneer.cloud_disk.service.EmailCodeService;
 import ju.pioneer.cloud_disk.service.UserInfoService;
+import ju.pioneer.cloud_disk.utils.CopyTools;
 import ju.pioneer.cloud_disk.utils.StringTools;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -24,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class UserInfoServiceImpl implements UserInfoService {
@@ -38,6 +46,19 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Resource
     private FileInfoMapper fileInfoMapper;
     private static final Logger logger = LoggerFactory.getLogger(UserInfoServiceImpl.class);
+
+
+    @Override
+    public PaginateResultVo<UserInfoVo> selectList(UserInfoQuery param) {
+        int count = userInfoMapper.selectCountByQuery(param);
+        int pageSize = param.getPageSize() == null ? PageSizeEnum.SIZE15.getSize() : param.getPageSize();
+        SimplePage page = new SimplePage(param.getPageNo(), count, pageSize);
+        param.setSimplePage(page);
+        logger.info("分页查询文件信息，参数：{}，分页信息：{}", param, page);
+        List<UserInfo> list = userInfoMapper.selectList(param);
+        List<UserInfoVo> userInfoVoList = CopyTools.copyList(list, UserInfoVo.class);
+        return new PaginateResultVo<>(count, page.getPageSize(), page.getPageNo(), page.getPageTotal(), userInfoVoList);
+    }
 
     /**
      * 注册
@@ -210,4 +231,26 @@ public class UserInfoServiceImpl implements UserInfoService {
         userInfoMapper.updateByPrimaryKeySelective(newUserInfo);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateStatus(String userId, Integer status) {
+        UserInfo newUserInfo = new UserInfo();
+        newUserInfo.setUserId(userId);
+        newUserInfo.setStatus(status);
+        if (UserStatuseEnum.DISABLE.getStatus().equals(status)) {
+            newUserInfo.setUseSpace(0L);
+        }
+        userInfoMapper.updateByPrimaryKeySelective(newUserInfo);
+        fileInfoMapper.deleteFileByUserId(userId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateUserSpace(String userId, Integer space) {
+        UserInfo userInfo = new UserInfo();
+        userInfo.setUserId(userId);
+        userInfo.setTotalSpace(space * Constants.MB);
+        userInfoMapper.updateByPrimaryKeySelective(userInfo);
+        redisComponent.resetUserSpaceUse(userId);
+    }
 }

@@ -21,13 +21,14 @@
         <result column="status" property="status"/>
         <result column="recovery_time" property="recoveryTime"/>
         <result column="del_flag" property="delFlag"/>
+        <result column="nickName" property="nickName"/>
     </resultMap>
 
     <!-- 通用查询列 -->
     <sql id="base_column_list">
-        file_id,user_id,file_md5,file_pid,file_size,
-        file_name,file_cover,file_path,create_time,last_update_time,
-        folder_type,file_category,file_type,status,recovery_time,del_flag
+        f.file_id,f.user_id,f.file_md5,f.file_pid,f.file_size,
+        f.file_name,f.file_cover,f.file_path,f.create_time,f.last_update_time,
+        f.folder_type,f.file_category,f.file_type,f.status,f.recovery_time,f.del_flag
     </sql>
 
     <!-- 通用更新SET片段，所有update复用 -->
@@ -50,16 +51,16 @@
 
     <!-- 基础等值查询条件 -->
     <sql id="base_condition_filed">
-        <if test="query.fileId != null and query.fileId!=''">and file_id = #{query.fileId}</if>
-        <if test="query.userId != null and query.userId!=''">and user_id = #{query.userId}</if>
-        <if test="query.fileMd5 != null and query.fileMd5!=''">and file_md5 = #{query.fileMd5}</if>
-        <if test="query.filePid != null and query.filePid!=''">and file_pid = #{query.filePid}</if>
-        <if test="query.fileSize != null">and file_size = #{query.fileSize}</if>
-        <if test="query.fileName != null and query.fileName!=''">and file_name = #{query.fileName}</if>
-        <if test="query.fileCover != null and query.fileCover!=''">and file_cover = #{query.fileCover}</if>
-        <if test="query.filePath != null and query.filePath!=''">and file_path = #{query.filePath}</if>
+        <if test="query.fileId != null and query.fileId!=''">and f.file_id = #{query.fileId}</if>
+        <if test="query.userId != null and query.userId!=''">and f.user_id = #{query.userId}</if>
+        <if test="query.fileMd5 != null and query.fileMd5!=''">and f.file_md5 = #{query.fileMd5}</if>
+        <if test="query.filePid != null and query.filePid!=''">and f.file_pid = #{query.filePid}</if>
+        <if test="query.fileSize != null">and f.file_size = #{query.fileSize}</if>
+        <if test="query.fileName != null and query.fileName!=''">and f.file_name = #{query.fileName}</if>
+        <if test="query.fileCover != null and query.fileCover!=''">and f.file_cover = #{query.fileCover}</if>
+        <if test="query.filePath != null and query.filePath!=''">and f.file_path = #{query.filePath}</if>
         <if test="query.createTime != null and query.createTime!=''">
-            <![CDATA[ and DATE(create_time) = STR_TO_DATE(#{query.createTime}, '%Y-%m-%d') ]]>
+            <![CDATA[ and DATE(f.create_time) = STR_TO_DATE(#{query.createTime}, '%Y-%m-%d') ]]>
         </if>
         <if test="query.lastUpdateTime != null and query.lastUpdateTime!=''">
             <![CDATA[ and DATE(last_update_time) = STR_TO_DATE(#{query.lastUpdateTime}, '%Y-%m-%d') ]]>
@@ -92,45 +93,45 @@
             <include refid="base_condition_filed"/>
             <!-- 模糊查询 -->
             <if test="query.fileIdFuzzy!= null and query.fileIdFuzzy!=''">
-                and file_id like concat('%', #{query.fileIdFuzzy}, '%')
+                and f.file_id like concat('%', #{query.fileIdFuzzy}, '%')
             </if>
             <if test="query.userIdFuzzy!= null and query.userIdFuzzy!=''">
-                and user_id like concat('%', #{query.userIdFuzzy}, '%')
+                and f.user_id like concat('%', #{query.userIdFuzzy}, '%')
             </if>
             <if test="query.fileMd5Fuzzy!= null and query.fileMd5Fuzzy!=''">
-                and file_md5 like concat('%', #{query.fileMd5Fuzzy}, '%')
+                and f.file_md5 like concat('%', #{query.fileMd5Fuzzy}, '%')
             </if>
             <if test="query.filePidFuzzy!= null and query.filePidFuzzy!=''">
-                and file_pid like concat('%', #{query.filePidFuzzy}, '%')
+                and f.file_pid like concat('%', #{query.filePidFuzzy}, '%')
             </if>
             <if test="query.fileNameFuzzy!= null and query.fileNameFuzzy!=''">
-                and file_name like concat('%', #{query.fileNameFuzzy}, '%')
+                and f.file_name like concat('%', #{query.fileNameFuzzy}, '%')
             </if>
             <if test="query.fileCoverFuzzy!= null and query.fileCoverFuzzy!=''">
-                and file_cover like concat('%', #{query.fileCoverFuzzy}, '%')
+                and f.file_cover like concat('%', #{query.fileCoverFuzzy}, '%')
             </if>
             <if test="query.filePathFuzzy!= null and query.filePathFuzzy!=''">
-                and file_path like concat('%', #{query.filePathFuzzy}, '%')
+                and f.file_path like concat('%', #{query.filePathFuzzy}, '%')
             </if>
 
             <!-- 时间区间优化，DATE范围匹配全天 -->
             <if test="query.createTimeStart!= null and query.createTimeStart!=''">
-                <![CDATA[ and create_time >= STR_TO_DATE(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+                <![CDATA[ and f.create_time >= STR_TO_DATE(#{query.createTimeStart}, '%Y-%m-%d') ]]>
             </if>
             <if test="query.createTimeEnd!= null and query.createTimeEnd!=''">
-                <![CDATA[ and create_time < DATE_ADD(STR_TO_DATE(#{query.createTimeEnd},'%Y-%m-%d'),INTERVAL 1 DAY) ]]>
+                <![CDATA[ and f.create_time < DATE_ADD(STR_TO_DATE(#{query.createTimeEnd},'%Y-%m-%d'),INTERVAL 1 DAY) ]]>
             </if>
             <if test="query.lastUpdateTimeStart!= null and query.lastUpdateTimeStart!=''">
-                <![CDATA[ and last_update_time >= STR_TO_DATE(#{query.lastUpdateTimeStart}, '%Y-%m-%d') ]]>
+                <![CDATA[ and f.last_update_time >= STR_TO_DATE(#{query.lastUpdateTimeStart}, '%Y-%m-%d') ]]>
             </if>
             <if test="query.lastUpdateTimeEnd!= null and query.lastUpdateTimeEnd!=''">
-                <![CDATA[ and last_update_time < DATE_ADD(STR_TO_DATE(#{query.lastUpdateTimeEnd},'%Y-%m-%d'),INTERVAL 1 DAY) ]]>
+                <![CDATA[ and f.last_update_time < DATE_ADD(STR_TO_DATE(#{query.lastUpdateTimeEnd},'%Y-%m-%d'),INTERVAL 1 DAY) ]]>
             </if>
             <if test="query.recoveryTimeStart!= null and query.recoveryTimeStart!=''">
-                <![CDATA[ and recovery_time >= STR_TO_DATE(#{query.recoveryTimeStart}, '%Y-%m-%d') ]]>
+                <![CDATA[ and f.recovery_time >= STR_TO_DATE(#{query.recoveryTimeStart}, '%Y-%m-%d') ]]>
             </if>
             <if test="query.recoveryTimeEnd!= null and query.recoveryTimeEnd!=''">
-                <![CDATA[ and recovery_time < DATE_ADD(STR_TO_DATE(#{query.recoveryTimeEnd},'%Y-%m-%d'),INTERVAL 1 DAY) ]]>
+                <![CDATA[ and f.recovery_time < DATE_ADD(STR_TO_DATE(#{query.recoveryTimeEnd},'%Y-%m-%d'),INTERVAL 1 DAY) ]]>
             </if>
 
             <!-- 过期回收站文件 -->
@@ -140,7 +141,6 @@
         </where>
     </sql>
 
-    <!-- 文件列表查询 LEFT JOIN 关联用户表，替代标量子查询提升性能 -->
     <select id="selectList" resultMap="base_result_map">
         SELECT
         <include refid="base_column_list"/>
@@ -152,7 +152,6 @@
             LEFT JOIN user_info u ON f.user_id = u.user_id
         </if>
         <include refid="query_condition"/>
-        <!-- 排序建议后端代码做字段白名单过滤，防止SQL注入 -->
         <if test="query.orderBy!=null">
             ORDER BY ${query.orderBy}
         </if>
@@ -163,7 +162,8 @@
 
     <!-- 查询总数 -->
     <select id="selectCount" resultType="java.lang.Integer">
-        SELECT COUNT(1) FROM file_info
+        SELECT COUNT(1)
+        FROM file_info f
         <include refid="query_condition"/>
     </select>
 
@@ -321,7 +321,8 @@
     <select id="selectByFileIdAndUserId" resultMap="base_result_map">
         SELECT
         <include refid="base_column_list"/>
-        FROM file_info WHERE file_id=#{fileId} AND user_id=#{userId}
+        FROM file_info f
+        WHERE file_id=#{fileId} AND user_id=#{userId}
     </select>
 
     <!-- 带旧状态条件更新 -->

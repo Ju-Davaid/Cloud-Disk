@@ -63,4 +63,6 @@ public class FileInfoVo {
      */
     private Integer status;
 
+    private String nickName;
+
 }

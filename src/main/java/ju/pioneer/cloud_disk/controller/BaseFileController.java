@@ -61,16 +61,15 @@ public class BaseFileController extends BaseController {
      * 获取文件内容
      *
      * @param response 响应
-     * @param session  会话
+     * @param userId   用户ID
      * @param fileId   文件ID
      */
-    protected void getFile(HttpServletResponse response, HttpSession session, String fileId) {
-        SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
+    protected void getFile(HttpServletResponse response, String userId, String fileId) {
         String filePath;
         if (fileId.endsWith(".ts")) {
             String[] tsArray = fileId.split("_");
             String realFileId = tsArray[0];
-            FileInfo fileInfo = fileInfoService.findFileInfoByFiledIdAndUserId(realFileId, sessionWebUserDto.getUserId());
+            FileInfo fileInfo = fileInfoService.findFileInfoByFiledIdAndUserId(realFileId, userId);
             if (fileInfo == null) {
                 throw new BusinessException(ResponseCodeEnum.CODE_404);
             }
@@ -78,7 +77,7 @@ public class BaseFileController extends BaseController {
             filePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + StringTools.getFileNameOfNoSuffix(fileName) + "/" + fileId;
             response.setContentType("video/mp2t");
         } else {
-            FileInfo fileInfo = fileInfoService.findFileInfoByFiledIdAndUserId(fileId, sessionWebUserDto.getUserId());
+            FileInfo fileInfo = fileInfoService.findFileInfoByFiledIdAndUserId(fileId, userId);
             if (fileInfo == null) {
                 throw new BusinessException(ResponseCodeEnum.CODE_404);
             }
@@ -104,7 +103,7 @@ public class BaseFileController extends BaseController {
     /**
      * 获取目录下的文件列表
      *
-     * @param path   � 目录路径
+     * @param path   目录路径
      * @param userId 用户ID
      * @return 目录下的文件列表
      */

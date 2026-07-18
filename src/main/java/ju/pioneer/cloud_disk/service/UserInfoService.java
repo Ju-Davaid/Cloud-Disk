@@ -1,6 +1,14 @@
 package ju.pioneer.cloud_disk.service;
+
 import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
+import ju.pioneer.cloud_disk.entity.po.UserInfo;
+import ju.pioneer.cloud_disk.entity.query.UserInfoQuery;
+import ju.pioneer.cloud_disk.entity.vo.FileInfoVo;
+import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
+import ju.pioneer.cloud_disk.entity.vo.UserInfoVo;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 public interface UserInfoService {
 
@@ -35,7 +43,7 @@ public interface UserInfoService {
     /**
      * 获取用户头像
      *
-     * @param userId   用户ID
+     * @param userId 用户ID
      */
     String getAvatar(String userId);
 
@@ -47,5 +55,29 @@ public interface UserInfoService {
      */
     void updateAvatar(String userId, MultipartFile avatar);
 
+    /**
+     * 更新用户密码
+     *
+     * @param userId   用户ID
+     * @param password 密码
+     */
     void updatePassword(String userId, String password);
+
+    /**
+     * 分页查询用户列表
+     *
+     * @param param 查询页
+     * @return 分页查询结果
+     */
+    PaginateResultVo<UserInfoVo> selectList(UserInfoQuery param);
+
+    /**
+     * 更新用户状态
+     *
+     * @param userId 用户ID
+     * @param status 状态
+     */
+    void updateStatus(String userId, Integer status);
+
+    void updateUserSpace(String userId, Integer space);
 }

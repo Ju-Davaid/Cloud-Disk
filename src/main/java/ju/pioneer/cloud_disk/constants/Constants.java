@@ -17,10 +17,15 @@ public class Constants {
      * 邮箱验证码过期时间，单位：毫秒
      */
     public static final int EMAIL_CODE_EXPIRE_TIME = 15 * 60 * 1000;
+
+    /**
+     * 单位：MB
+     */
+    public static final long MB = 1024 * 1024L;
     /**
      * 默认空间：5GB，单位：字节
      */
-    public static final long DEFAULT_SPACE = 5 * 1024 * 1024 * 1024L;
+    public static final long DEFAULT_SPACE = 5 * 1024 * MB;
     /**
      * 用户空间使用量key
      */

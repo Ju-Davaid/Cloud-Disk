@@ -6,13 +6,13 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum UserStatuseEnum {
-    ENABLE((byte) 1, "启用"),
-    DISABLE((byte) 0, "禁用");
+    ENABLE(1, "启用"),
+    DISABLE(0, "禁用");
 
-    private final byte status;
+    private final Integer status;
     private final String desc;
 
-    public UserStatuseEnum getByStatus(byte status) {
+    public UserStatuseEnum getByStatus(Integer status) {
         for (UserStatuseEnum value : values()) {
             if (value.getStatus() == status) {
                 return value;
