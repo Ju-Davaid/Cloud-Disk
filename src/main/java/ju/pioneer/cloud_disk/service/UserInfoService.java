@@ -12,6 +12,9 @@ import java.util.List;
 
 public interface UserInfoService {
 
+
+    UserInfo selectById(String userId);
+
     /**
      * 注册
      *

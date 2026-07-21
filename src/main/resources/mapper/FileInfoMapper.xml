@@ -385,9 +385,21 @@
         WITH RECURSIVE file_tree AS (
         SELECT
         t.file_id,
+        t.user_id,
+        t.file_md5,
         t.file_pid,
+        t.file_size,
         t.file_name,
-        t.folder_type
+        t.file_cover,
+        t.file_path,
+        t.create_time,
+        t.last_update_time,
+        t.folder_type,
+        t.file_category,
+        t.file_type,
+        t.status,
+        t.recovery_time,
+        t.del_flag
         FROM file_info t
         <where>
             <if test="query.userId != null">
@@ -408,9 +420,21 @@
 
         SELECT
         child.file_id,
+        child.user_id,
+        child.file_md5,
         child.file_pid,
+        child.file_size,
         child.file_name,
-        child.folder_type
+        child.file_cover,
+        child.file_path,
+        child.create_time,
+        child.last_update_time,
+        child.folder_type,
+        child.file_category,
+        child.file_type,
+        child.status,
+        child.recovery_time,
+        child.del_flag
         FROM file_info child
         INNER JOIN file_tree root ON child.file_pid = root.file_id
         <where>
@@ -438,5 +462,62 @@
         <if test="query.orderBy != null and query.orderBy != ''">
             ORDER BY ${query.orderBy}
         </if>
+    </select>
+    <select id="getFileTreeTotalSize" resultType="java.lang.Long">
+        WITH RECURSIVE file_tree AS (
+        SELECT
+        t.file_id,
+        t.user_id,
+        t.file_pid,
+        t.file_size,
+        t.del_flag
+        FROM file_info t
+        <where>
+            <if test="query.userId != null">
+                t.user_id = #{query.userId}
+            </if>
+            <if test="query.parentDelFlag != null">
+                AND t.del_flag = #{query.parentDelFlag, jdbcType=INTEGER}
+            </if>
+            <if test="query.parentFileIdArray != null and query.parentFileIdArray.length > 0">
+                AND t.file_id IN
+                <foreach collection="query.parentFileIdArray" open="(" separator="," close=")" item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+
+        UNION ALL
+
+        SELECT
+        child.file_id,
+        child.user_id,
+        child.file_pid,
+        child.file_size,
+        child.del_flag
+        FROM file_info child
+        INNER JOIN file_tree root ON child.file_pid = root.file_id
+        <where>
+            <if test="query.userId != null">
+                child.user_id = #{query.userId}
+            </if>
+            <if test="query.childDelFlag != null">
+                AND child.del_flag = #{query.childDelFlag, jdbcType=INTEGER}
+            </if>
+        </where>
+        )
+        SELECT IFNULL(SUM(file_size), 0) AS totalSize
+        FROM file_tree
+        <where>
+            <if test="query.resultFolderType != null">
+                file_tree.folder_type = #{query.resultFolderType, jdbcType=INTEGER}
+            </if>
+            <if test="!query.isIncludeParent and query.parentFileIdArray != null and query.parentFileIdArray.length > 0">
+                AND file_tree.file_id NOT IN
+                <foreach collection="query.parentFileIdArray" open="(" separator="," close=")" item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
     </select>
 </mapper>

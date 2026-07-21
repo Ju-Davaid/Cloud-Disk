@@ -1,6 +1,7 @@
 package ju.pioneer.cloud_disk.controller;
 
 import jakarta.annotation.Resource;
+import jakarta.mail.Folder;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import ju.pioneer.cloud_disk.component.RedisComponent;
@@ -14,6 +15,7 @@ import ju.pioneer.cloud_disk.entity.enums.ResponseCodeEnum;
 import ju.pioneer.cloud_disk.entity.po.FileInfo;
 import ju.pioneer.cloud_disk.entity.query.FileInfoQuery;
 import ju.pioneer.cloud_disk.entity.vo.FileInfoVo;
+import ju.pioneer.cloud_disk.entity.vo.FolderVo;
 import ju.pioneer.cloud_disk.entity.vo.ResponseVO;
 import ju.pioneer.cloud_disk.exception.BusinessException;
 import ju.pioneer.cloud_disk.service.FileInfoService;
@@ -107,7 +109,7 @@ public class BaseFileController extends BaseController {
      * @param userId 用户ID
      * @return 目录下的文件列表
      */
-    protected ResponseVO<?> getFolderInfo(String path, String userId) {
+    protected ResponseVO<List<FolderVo>> getFolderInfo(String path, String userId) {
         String[] pathArr = path.split("/");
         FileInfoQuery query = new FileInfoQuery();
         query.setUserId(userId);
@@ -116,7 +118,7 @@ public class BaseFileController extends BaseController {
         String orderBy = "field(file_id,\"" + StringUtils.join(pathArr, "\",\"") + "\")";
         query.setOrderBy(orderBy);
         List<FileInfo> fileInfoList = fileInfoService.findListByParam(query);
-        List<FileInfoVo> fileInfoVoList = CopyTools.copyList(fileInfoList, FileInfoVo.class);
+        List<FolderVo> fileInfoVoList = CopyTools.copyList(fileInfoList, FolderVo.class);
         return getSuccessResponseVO(fileInfoVoList);
     }
 
@@ -132,7 +134,7 @@ public class BaseFileController extends BaseController {
         DownloadFileDto downloadFileDto = new DownloadFileDto();
         downloadFileDto.setCode(code);
         downloadFileDto.setFileId(fileId);
-        downloadFileDto.setFileName(fileInfo.getFilePath());
+        downloadFileDto.setFileName(fileInfo.getFileName());
         downloadFileDto.setFilePath(fileInfo.getFilePath());
         redisComponent.saveDownloadCode(code, downloadFileDto);
         return getSuccessResponseVO(code);

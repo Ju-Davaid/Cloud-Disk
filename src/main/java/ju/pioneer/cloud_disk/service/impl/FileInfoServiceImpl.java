@@ -1,5 +1,6 @@
 package ju.pioneer.cloud_disk.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import jakarta.annotation.Resource;
 import ju.pioneer.cloud_disk.component.RedisComponent;
 import ju.pioneer.cloud_disk.config.AppConfig;
@@ -24,6 +25,7 @@ import ju.pioneer.cloud_disk.utils.ScaleFilter;
 import ju.pioneer.cloud_disk.utils.StringTools;
 import ju.pioneer.cloud_disk.utils.VideoUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -390,6 +392,107 @@ public class FileInfoServiceImpl implements FileInfoService {
         userSpaceDto.setUseSpace(useSpace);
         userSpaceDto.setTotalSpace(oldUserSpaceDto.getTotalSpace());
         redisComponent.saveUserSpaceUse(userId, userSpaceDto);
+    }
+
+    /**
+     * 校验根目录
+     *
+     * @param rootFilePid 文件父目录ID
+     * @param userId      用户ID
+     * @param fileId      文件ID
+     */
+    @Override
+    public void checkRootDirectory(String rootFilePid, String userId, String fileId) {
+        if (StringTools.isEmpty(fileId)) {
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        if (rootFilePid.equals(fileId)) return;
+        checkFilePid(rootFilePid, userId, fileId);
+    }
+
+    /**
+     * 保存分享文件
+     *
+     * @param shareRootFilePid 分享文件根目录ID
+     * @param fileIds          分享文件ID列表
+     * @param targetFolderId   分享文件ID列表
+     * @param shareUserId      分享用户ID
+     * @param targetUserId     目标用户ID
+     */
+    @Override
+    public void saveShareFile(String shareRootFilePid, String fileIds, String targetFolderId, String shareUserId, String targetUserId) {
+        String[] fileIdArray = fileIds.split(",");
+        // 递归查询所有子孙文件查询条件
+        RecursiveFileInfoQuery recursiveFileInfoQuery = new RecursiveFileInfoQuery();
+        recursiveFileInfoQuery.setUserId(shareUserId);
+        recursiveFileInfoQuery.setParentFileIdArray(fileIdArray);
+        recursiveFileInfoQuery.setIsIncludeParent(true);
+        // 查询分享文件所有子孙文件总大小
+        Long shareFileTreeTotalSize = fileInfoMapper.getFileTreeTotalSize(recursiveFileInfoQuery);
+
+        UserSpaceDto userSpaceDto = redisComponent.getUserSpaceUse(targetUserId);
+        // 校验目标用户空间是否足够
+        if (userSpaceDto.getUseSpace() + shareFileTreeTotalSize > userSpaceDto.getTotalSpace()) {
+            throw new BusinessException(ResponseCodeEnum.CODE_904);
+        }
+        FileInfoQuery targetFolderChildFileQuery = new FileInfoQuery();
+        targetFolderChildFileQuery.setUserId(targetUserId);
+        targetFolderChildFileQuery.setFilePid(targetFolderId);
+        List<FileInfo> targetFolderChildFileList = fileInfoMapper.selectList(targetFolderChildFileQuery);
+        Set<String> targetFolderChildFileNameList = targetFolderChildFileList.stream().map(FileInfo::getFileName).collect(Collectors.toSet());
+        // 要保存的文件夹的新旧fileId映射(为后续更新子文件信息做准备)
+        FileInfoQuery savedFileInfoQuery = new FileInfoQuery();
+        savedFileInfoQuery.setUserId(shareUserId);
+        savedFileInfoQuery.setFileIdArray(fileIdArray);
+        // 递归查询分享文件下的所有文件
+        List<FileInfo> savedFileList = fileInfoMapper.selectAllChildFileInfo(recursiveFileInfoQuery);
+        // 新旧目录ID映射 旧ID -> 新ID (为后续更新子文件信息做准备)
+        Map<String, String> filePidMap = savedFileList.stream().filter(fileInfo -> fileInfo.getFolderType().equals(FileFolderTypeEnum.FOLDER.getType())).collect(Collectors.toMap(FileInfo::getFileId, (i) -> StringTools.getUUID()));
+        logger.info("filePidMap:{}", filePidMap);
+        Date curDate = new Date();
+        // 修改分享文件信息为目标文件夹下的文件信息
+        for (FileInfo savedItem : savedFileList) {
+            logger.info("savedItem:{}", savedItem);
+            // 更改分享文件filePid
+            if (ArrayUtils.contains(fileIdArray, savedItem.getFileId())) {
+                savedItem.setFilePid(targetFolderId);
+                String newName = StringTools.getSafeFileName(savedItem.getFileName(), targetFolderChildFileNameList);
+                savedItem.setFileName(newName);
+                targetFolderChildFileNameList.add(newName);
+            } else if (filePidMap.containsKey(savedItem.getFilePid())) {
+                savedItem.setFilePid(filePidMap.get(savedItem.getFilePid()));
+            }
+            // 更改分享文件fileId
+            if (savedItem.getFolderType().equals(FileFolderTypeEnum.FOLDER.getType())) {
+                savedItem.setFileId(filePidMap.get(savedItem.getFileId()));
+            } else {
+                savedItem.setFileId(StringTools.getUUID());
+            }
+            savedItem.setUserId(targetUserId);
+            savedItem.setDelFlag(FileDeleteEnum.USING.getFlag());
+            savedItem.setCreateTime(curDate);
+            savedItem.setLastUpdateTime(curDate);
+        }
+        fileInfoMapper.insertBatch(savedFileList);
+    }
+
+    /**
+     * 校验文件父目录ID
+     *
+     * @param rootFilePid 文件父目录ID
+     * @param userId      用户ID
+     * @param fileId      文件ID
+     */
+    private void checkFilePid(String rootFilePid, String userId, String fileId) {
+        FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileId, userId);
+        if (fileInfo == null) {
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        if (fileInfo.getFilePid().equals(Constants.USER_ROOT_DIRECTORY_ID)) {
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        if (rootFilePid.equals(fileInfo.getFilePid())) return;
+        checkFilePid(rootFilePid, userId, fileInfo.getFilePid());
     }
 
     /**

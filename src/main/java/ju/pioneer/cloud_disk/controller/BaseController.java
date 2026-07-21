@@ -3,6 +3,7 @@ package ju.pioneer.cloud_disk.controller;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import ju.pioneer.cloud_disk.constants.Constants;
+import ju.pioneer.cloud_disk.entity.dto.SessionShareDto;
 import ju.pioneer.cloud_disk.entity.dto.SessionWebUserDto;
 import ju.pioneer.cloud_disk.entity.enums.ResponseCodeEnum;
 import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
@@ -127,6 +128,15 @@ public class BaseController {
         resultVo.setTotalCount(result.getTotalCount());
         resultVo.setPageSize(result.getPageSize());
         return resultVo;
+    }
 
+    /**
+     * 从会话中获取分享信息
+     *
+     * @param session 会话
+     * @return 分享信息
+     */
+    protected SessionShareDto getSessionShareDtoFromSession(HttpSession session, String shareId) {
+        return (SessionShareDto) session.getAttribute(Constants.SESSION_SHARE_DTO_KEY + shareId);
     }
 }

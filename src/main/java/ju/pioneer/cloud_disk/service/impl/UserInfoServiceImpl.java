@@ -253,4 +253,9 @@ public class UserInfoServiceImpl implements UserInfoService {
         userInfoMapper.updateByPrimaryKeySelective(userInfo);
         redisComponent.resetUserSpaceUse(userId);
     }
+
+    @Override
+    public UserInfo selectById(String userId) {
+        return userInfoMapper.selectByPrimaryKey(userId);
+    }
 }

@@ -1,14 +1,18 @@
 package ju.pioneer.cloud_disk.service.impl;
 
 import jakarta.annotation.Resource;
+import ju.pioneer.cloud_disk.constants.Constants;
+import ju.pioneer.cloud_disk.entity.dto.SessionShareDto;
 import ju.pioneer.cloud_disk.entity.enums.PageSizeEnum;
 import ju.pioneer.cloud_disk.entity.enums.ResponseCodeEnum;
 import ju.pioneer.cloud_disk.entity.enums.ShareValidTypeEnum;
+import ju.pioneer.cloud_disk.entity.po.FileInfo;
 import ju.pioneer.cloud_disk.entity.po.FileShare;
 import ju.pioneer.cloud_disk.entity.query.FileShareQuery;
 import ju.pioneer.cloud_disk.entity.query.SimplePage;
 import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
 import ju.pioneer.cloud_disk.exception.BusinessException;
+import ju.pioneer.cloud_disk.mapper.FileInfoMapper;
 import ju.pioneer.cloud_disk.mapper.FileShareMapper;
 import ju.pioneer.cloud_disk.service.FileShareService;
 import ju.pioneer.cloud_disk.utils.DateUtil;
@@ -27,6 +31,9 @@ class FileShareServiceImpl implements FileShareService {
 
     @Resource
     private FileShareMapper fileShareMapper;
+
+    @Resource
+    private FileInfoMapper fileInfoMapper;
 
     /**
      * 根据条件查询列表
@@ -114,6 +121,12 @@ class FileShareServiceImpl implements FileShareService {
         return this.fileShareMapper.deleteByPrimaryKey(shareId);
     }
 
+    /**
+     * 保存分享信息
+     *
+     * @param share 分享信息
+     * @return 分享信息
+     */
     @Override
     public FileShare saveShare(FileShare share) {
         ShareValidTypeEnum typeEnum = ShareValidTypeEnum.getByType(share.getValidType());
@@ -134,6 +147,12 @@ class FileShareServiceImpl implements FileShareService {
         return share;
     }
 
+    /**
+     * 批量删除分享信息
+     *
+     * @param shareIdArray 分享ID数组
+     * @param userId       用户ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteFileShareBatch(String[] shareIdArray, String userId) {
@@ -146,23 +165,30 @@ class FileShareServiceImpl implements FileShareService {
         }
     }
 
-//    @Override
-//    public SessionShareDto checkShareCode(String shareId, String code) {
-//        FileShare share = this.fileShareMapper.selectByShareId(shareId);
-//        if (null == share || (share.getExpireTime() != null && new Date().after(share.getExpireTime()))) {
-//            throw new BusinessException(ResponseCodeEnum.CODE_902);
-//        }
-//        if (!share.getCode().equals(code)) {
-//            throw new BusinessException("提取码错误");
-//        }
-//
-//        //更新浏览次数
-//        this.fileShareMapper.updateShareShowCount(shareId);
-//        SessionShareDto shareSessionDto = new SessionShareDto();
-//        shareSessionDto.setShareId(shareId);
-//        shareSessionDto.setShareUserId(share.getUserId());
-//        shareSessionDto.setFileId(share.getFileId());
-//        shareSessionDto.setExpireTime(share.getExpireTime());
-//        return shareSessionDto;
-//    }
+    /**
+     * 校验分享码
+     *
+     * @param shareId 分享ID
+     * @param code    提取码
+     * @return 分享信息VO
+     */
+    @Override
+    public SessionShareDto checkShareCode(String shareId, String code) {
+        FileShare share = this.fileShareMapper.selectByPrimaryKey(shareId);
+        if (share == null || (share.getExpireTime() != null && new Date().after(share.getExpireTime()))) {
+            throw new BusinessException(ResponseCodeEnum.CODE_902);
+        }
+        if (!share.getCode().equals(code)) {
+            throw new BusinessException("提取码错误");
+        }
+
+        //更新浏览次数
+        this.fileShareMapper.updateShareShowCount(shareId);
+        SessionShareDto shareSessionDto = new SessionShareDto();
+        shareSessionDto.setShareId(shareId);
+        shareSessionDto.setUserId(share.getUserId());
+        shareSessionDto.setFileId(share.getFileId());
+        shareSessionDto.setExpireTime(share.getExpireTime());
+        return shareSessionDto;
+    }
 }

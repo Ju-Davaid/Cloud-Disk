@@ -39,6 +39,10 @@ public class Constants {
      */
     public static final String SESSION_WEB_USER_KEY = "sessionWebUserKey";
     /**
+     * 会话分享key
+     */
+    public static final String SESSION_SHARE_DTO_KEY = "sessionShareDtoKey_";
+    /**
      * 文件存储路径
      */
     public static final String FILE_FOLDER = "/file/";

@@ -120,4 +120,22 @@ public interface FileInfoService {
      * @param isAdmin 是否为管理员
      */
     void deleteFile(String userId, String[] fileIds, boolean isAdmin);
+
+    /**
+     * 校验根目录
+     *
+     * @param rootFilePid 文件父目录ID
+     * @param userId      用户ID
+     * @param fileId      文件ID
+     */
+    void checkRootDirectory(String rootFilePid, String userId, String fileId);
+
+    /**
+     * 保存分享文件
+     *
+     * @param shareRootFilePid 分享根文件目录ID
+     * @param fileIds       分享文件ID列表
+     * @param targetFolderId 目标文件夹ID
+     */
+    void saveShareFile(String shareRootFilePid, String fileIds, String targetFolderId,String shareUserId,String targetUserId);
 }

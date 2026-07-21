@@ -14,6 +14,8 @@ public enum ResponseCodeEnum {
     CODE_601(601, "信息已存在"),
     CODE_500(500, "服务器返回错误，请联系管理员"),
     CODE_901(901, "登录过期，请重新登录"),
+    CODE_902(902, "分享链接不存在，或已失效"),
+    CODE_903(903, "分享验证失效，请重新验证"),
     CODE_904(904, "用户空间不足");
     private final int code;
     private final String msg;

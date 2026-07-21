@@ -1,5 +1,6 @@
 package ju.pioneer.cloud_disk.service;
 
+import ju.pioneer.cloud_disk.entity.dto.SessionShareDto;
 import ju.pioneer.cloud_disk.entity.po.FileShare;
 import ju.pioneer.cloud_disk.entity.query.FileShareQuery;
 import ju.pioneer.cloud_disk.entity.vo.PaginateResultVo;
@@ -59,9 +60,30 @@ public interface FileShareService {
      */
     Integer deleteFileShareByShareId(String shareId);
 
+    /**
+     * 保存分享信息
+     *
+     * @param share 分享信息
+     * @return 分享信息
+     */
     FileShare saveShare(FileShare share);
+
+    /**
+     * 批量删除分享信息
+     *
+     * @param shareIdArray 分享ID数组
+     * @param userId       用户ID
+     */
 
     void deleteFileShareBatch(String[] shareIdArray, String userId);
 
-//    SessionShareDto checkShareCode(  String shareId,String code);
+    /**
+     * 校验分享码
+     *
+     * @param shareId 分享ID
+     * @param code    提取码
+     * @return 分享信息VO
+     */
+    SessionShareDto checkShareCode(String shareId, String code);
+
 }

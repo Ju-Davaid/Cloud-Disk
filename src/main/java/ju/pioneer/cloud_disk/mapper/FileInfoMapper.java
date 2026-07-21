@@ -1,15 +1,10 @@
 package ju.pioneer.cloud_disk.mapper;
 
 import ju.pioneer.cloud_disk.entity.po.FileInfo;
-import ju.pioneer.cloud_disk.entity.po.FileInfoKey;
 import ju.pioneer.cloud_disk.entity.query.FileInfoQuery;
 import ju.pioneer.cloud_disk.entity.query.RecursiveFileInfoQuery;
 import org.apache.ibatis.annotations.Param;
-
 import java.util.List;
-
-import java.util.List;
-
 /**
  * 文件信息 数据库操作接口
  */
@@ -88,8 +83,17 @@ public interface FileInfoMapper {
 
     /**
      * selectAllChildFile:(查询用户回收站所有子孙文件ID)
+     *
      * @param p 查询参数
      * @return 子孙文件ID列表
      */
     List<FileInfo> selectAllChildFileInfo(@Param("query") RecursiveFileInfoQuery p);
+
+    /**
+     * 查询用户回收站所有子孙文件总大小
+     *
+     * @param p 查询参数
+     * @return 子孙文件总大小
+     */
+    Long getFileTreeTotalSize(@Param("query") RecursiveFileInfoQuery p);
 }
