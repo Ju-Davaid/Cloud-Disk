@@ -463,6 +463,7 @@
             ORDER BY ${query.orderBy}
         </if>
     </select>
+    <!-- 查询子孙文件大小 -->
     <select id="getFileTreeTotalSize" resultType="java.lang.Long">
         WITH RECURSIVE file_tree AS (
         SELECT

@@ -429,7 +429,6 @@ public class FileInfoServiceImpl implements FileInfoService {
         recursiveFileInfoQuery.setIsIncludeParent(true);
         // 查询分享文件所有子孙文件总大小
         Long shareFileTreeTotalSize = fileInfoMapper.getFileTreeTotalSize(recursiveFileInfoQuery);
-
         UserSpaceDto userSpaceDto = redisComponent.getUserSpaceUse(targetUserId);
         // 校验目标用户空间是否足够
         if (userSpaceDto.getUseSpace() + shareFileTreeTotalSize > userSpaceDto.getTotalSpace()) {
@@ -448,15 +447,13 @@ public class FileInfoServiceImpl implements FileInfoService {
         List<FileInfo> savedFileList = fileInfoMapper.selectAllChildFileInfo(recursiveFileInfoQuery);
         // 新旧目录ID映射 旧ID -> 新ID (为后续更新子文件信息做准备)
         Map<String, String> filePidMap = savedFileList.stream().filter(fileInfo -> fileInfo.getFolderType().equals(FileFolderTypeEnum.FOLDER.getType())).collect(Collectors.toMap(FileInfo::getFileId, (i) -> StringTools.getUUID()));
-        logger.info("filePidMap:{}", filePidMap);
         Date curDate = new Date();
         // 修改分享文件信息为目标文件夹下的文件信息
         for (FileInfo savedItem : savedFileList) {
-            logger.info("savedItem:{}", savedItem);
             // 更改分享文件filePid
             if (ArrayUtils.contains(fileIdArray, savedItem.getFileId())) {
                 savedItem.setFilePid(targetFolderId);
-                String newName = StringTools.getSafeFileName(savedItem.getFileName(), targetFolderChildFileNameList);
+                String newName = StringTools.getSafeFileName(savedItem.getFileName(),targetFolderChildFileNameList);
                 savedItem.setFileName(newName);
                 targetFolderChildFileNameList.add(newName);
             } else if (filePidMap.containsKey(savedItem.getFilePid())) {

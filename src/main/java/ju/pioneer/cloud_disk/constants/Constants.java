@@ -91,4 +91,8 @@ public class Constants {
      * 视频封面大小
      */
     public static final int COVER_SIZE = 150;
+    /**
+     * 文件清理器延迟时间，单位：毫秒
+     */
+    public static final int FILE_CLEANER_DELAY = 1000 * 60 * 5;
 }
